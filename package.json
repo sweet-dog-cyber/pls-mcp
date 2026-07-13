@@ -1,5 +1,5 @@
 {
-  "name": "@ishz/pls-mcp",
+  "name": "pls-mcp",
   "version": "1.0.0",
   "description": "PLS positioning system MCP Server - query and manage PLS electronic fence personnel positioning system data",
   "type": "module",
