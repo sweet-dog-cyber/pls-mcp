@@ -1,7 +1,10 @@
 node_modules/
-dist/
 .env
 *.tgz
 *.log
 .DS_Store
 .idea/
+src/
+tsconfig.json
+*.zip
+test_env.mjs

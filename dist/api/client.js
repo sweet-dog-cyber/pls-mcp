@@ -10,6 +10,7 @@ export function getApiClient() {
         headers: {
             'Content-Type': 'application/json',
         },
+        proxy: false,
     });
     httpClient.interceptors.response.use((response) => response, (error) => {
         log('API error:', error.message);
