@@ -12,6 +12,7 @@ export function getApiClient(): AxiosInstance {
     headers: {
       'Content-Type': 'application/json',
     },
+    proxy: false,
   });
 
   httpClient.interceptors.response.use(
