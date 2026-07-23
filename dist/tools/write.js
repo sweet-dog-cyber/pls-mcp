@@ -1,6 +1,7 @@
 import { server, z } from '../server.js';
 import { callMcpWrite } from '../api/client.js';
 import { log } from '../config/settings.js';
+import { DESTRUCTIVE_ANNOTATIONS } from '../constants.js';
 function registerWriteTool(name, description, path, hasTagId) {
     const schemaObj = {
         entityId: z.string().describe('实体ID（人员/车辆/物品ID），长整型数字请以字符串传入避免精度丢失'),
@@ -11,6 +12,7 @@ function registerWriteTool(name, description, path, hasTagId) {
     server.registerTool(name, {
         title: name,
         description,
+        annotations: DESTRUCTIVE_ANNOTATIONS,
         inputSchema: z.object(schemaObj).strict(),
     }, async (args) => {
         try {
@@ -32,7 +34,7 @@ function registerWriteTool(name, description, path, hasTagId) {
         }
     });
 }
-// Person bind/unbind
+// ── Person bind/unbind ──
 registerWriteTool('pls_bind_tag_to_person', `将标签绑定到人员。
 
 参数:
@@ -46,7 +48,7 @@ registerWriteTool('pls_unbind_tag_from_person', `解除人员与标签的绑定�
   - entityId: 人员ID（必填）
 
 注意: 解绑后标签变为未绑定状态`, 'unbind/person', false);
-// Car bind/unbind
+// ── Car bind/unbind ──
 registerWriteTool('pls_bind_tag_to_car', `将标签绑定到车辆。
 
 参数:
@@ -56,7 +58,7 @@ registerWriteTool('pls_unbind_tag_from_car', `解除车辆与标签的绑定。
 
 参数:
   - entityId: 车辆ID（必填）`, 'unbind/car', false);
-// Goods bind/unbind
+// ── Goods bind/unbind ──
 registerWriteTool('pls_bind_tag_to_goods', `将标签绑定到物品/货物。
 
 参数:

@@ -25,11 +25,9 @@ server.registerTool('get_tag_location', {
         let bindName = '';
         try {
             const bindings = await callTagBindings();
-            if (Array.isArray(bindings)) {
-                const match = bindings.find((b) => b.tagCode === tagCode);
-                if (match)
-                    bindName = match.bindName;
-            }
+            const match = bindings.find((b) => b.tagCode === tagCode);
+            if (match)
+                bindName = match.bindName;
         }
         catch (e) {
             log(`Warning: failed to fetch bindings for ${tagCode}: ${e.message}`);

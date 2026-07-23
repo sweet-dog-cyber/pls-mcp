@@ -2,6 +2,7 @@ import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
 import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('list_departments', {
     title: 'list_departments',
     description: `获取部门列表，返回树状组织结构。
@@ -23,14 +24,20 @@ server.registerTool('list_departments', {
             sql += " AND name LIKE ?";
             params.push(`%${keyword}%`);
         }
-        sql += ' ORDER BY pid ASC, id ASC';
+        sql += ' ORDER BY pid ASC, id ASC LIMIT 2000';
         const rows = await query(sql, params);
         const allDepts = rows.map((d) => ({
             id: d.id, name: d.name, code: d.code, pid: d.pid,
             head: d.head, phone: d.phone, description: d.description,
         }));
         const tree = buildDeptTree(allDepts);
-        return { content: [{ type: 'text', text: JSON.stringify({ total: allDepts.length, departments: tree }, null, 2) }] };
+        const { text, truncated } = truncateOutput(JSON.stringify({ total: allDepts.length, departments: tree }, null, 2));
+        return {
+            content: [{
+                    type: 'text',
+                    text: truncated ? text + '\n\n⚠️ [输出已截断] 返回了前 2000 条记录。' : text,
+                }],
+        };
     }
     catch (err) {
         log('Error in list_departments:', err.message);

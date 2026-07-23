@@ -1,6 +1,7 @@
 import { server, z } from '../server.js';
 import { callExternal } from '../api/client.js';
 import { log } from '../config/settings.js';
+import { DESTRUCTIVE_ANNOTATIONS } from '../constants.js';
 server.registerTool('pls_send_sos_alarm', {
     title: 'pls_send_sos_alarm',
     description: `发送 SOS 告警。触发指定标签的紧急告警通知。
@@ -10,13 +11,14 @@ server.registerTool('pls_send_sos_alarm', {
 
 返回: 操作是否成功
 
-注意: 此操作会触发真实告警通知`,
+警告: 此操作会触发真实告警通知，请谨慎使用！仅在确认紧急情况下调用。`,
+    annotations: DESTRUCTIVE_ANNOTATIONS,
     inputSchema: z.object({
         tagCodes: z.array(z.string()).min(1).max(100).describe('标签编码列表，如 ["UWB001"]'),
     }).strict(),
 }, async (args) => {
     try {
-        const res = await callExternal('sos/alarm', 'POST', undefined, { codeList: args.tagCodes });
+        await callExternal('sos/alarm', 'POST', undefined, { codeList: args.tagCodes });
         return { content: [{ type: 'text', text: JSON.stringify({ success: true, tagCodes: args.tagCodes }, null, 2) }] };
     }
     catch (err) {
@@ -29,9 +31,17 @@ server.registerTool('pls_batch_update_anchors', {
     description: `批量更新基站信息，包括状态、IP、型号等。
 
 参数:
-  - anchors: 基站更新列表（必填），每项含 code(基站编码), ip(可选), model(可选), mapId(可选), status(可选)
+  - anchors: 基站更新列表（必填），每项含:
+    - code: 基站编码（必填）
+    - ip: 基站 IP（可选）
+    - model: 基站型号（可选）
+    - mapId: 地图ID（可选）
+    - status: 状态（可选）0-在线, 1-离线
 
-注意: 只更新提供的字段，未提供的字段保持不变`,
+返回: 成功更新的基站数量
+
+注意: 只更新提供的字段，未提供的字段保持不变。最多支持 500 条。`,
+    annotations: DESTRUCTIVE_ANNOTATIONS,
     inputSchema: z.object({
         anchors: z.array(z.object({
             code: z.string().describe('基站编码'),
@@ -43,7 +53,7 @@ server.registerTool('pls_batch_update_anchors', {
     }).strict(),
 }, async (args) => {
     try {
-        const res = await callExternal('update/anchor', 'POST', args.anchors);
+        await callExternal('update/anchor', 'POST', args.anchors);
         return { content: [{ type: 'text', text: JSON.stringify({ success: true, count: args.anchors.length }, null, 2) }] };
     }
     catch (err) {
@@ -56,9 +66,15 @@ server.registerTool('pls_batch_update_tags', {
     description: `批量更新标签信息，包括电量和状态。
 
 参数:
-  - tags: 标签更新列表（必填），每项含 code(标签编码), battery(可选), status(可选)
+  - tags: 标签更新列表（必填），每项含:
+    - code: 标签编码（必填）
+    - battery: 电量（可选）
+    - status: 状态（可选）0-在线, 1-离线
 
-注意: 只更新提供的字段，未提供的字段保持不变`,
+返回: 成功更新的标签数量
+
+注意: 只更新提供的字段，未提供的字段保持不变。最多支持 500 条。`,
+    annotations: DESTRUCTIVE_ANNOTATIONS,
     inputSchema: z.object({
         tags: z.array(z.object({
             code: z.string().describe('标签编码'),
@@ -68,7 +84,7 @@ server.registerTool('pls_batch_update_tags', {
     }).strict(),
 }, async (args) => {
     try {
-        const res = await callExternal('update/tag', 'POST', args.tags);
+        await callExternal('update/tag', 'POST', args.tags);
         return { content: [{ type: 'text', text: JSON.stringify({ success: true, count: args.tags.length }, null, 2) }] };
     }
     catch (err) {

@@ -2,6 +2,7 @@ import { server, z } from '../server.js';
 import { callTagBindings } from '../api/client.js';
 import { log } from '../config/settings.js';
 import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('get_tag_bindings', {
     title: 'get_tag_bindings',
     description: `查询标签与人员/车辆/货物的绑定关系。返回所有已绑定的标签及其对应的对象名称和类型。
@@ -20,17 +21,18 @@ server.registerTool('get_tag_bindings', {
 }, async (args) => {
     try {
         const { tagCode } = args;
-        const raw = await callTagBindings();
-        const entries = typeof raw === 'object' && !Array.isArray(raw) ? Object.entries(raw) : raw;
-        const results = entries
-            .filter((b) => { const code = Array.isArray(b) ? b[0] : b.tagCode; return !tagCode || code === tagCode; })
-            .map((b) => ({
-            tagCode: Array.isArray(b) ? b[0] : b.tagCode,
-            bindName: Array.isArray(b) ? b[1] : b.bindName,
-            bindType: Array.isArray(b) ? '' : (b.bindType || ''),
-            bindId: Array.isArray(b) ? '' : (b.bindId || ''),
-        }));
-        return { content: [{ type: 'text', text: JSON.stringify({ total: results.length, bindings: results }, null, 2) }] };
+        // callTagBindings now returns a unified array format: { tagCode, bindName, bindType, bindId }[]
+        const bindings = await callTagBindings();
+        const results = tagCode
+            ? bindings.filter((b) => b.tagCode === tagCode)
+            : bindings;
+        const { text, truncated } = truncateOutput(JSON.stringify({ total: results.length, bindings: results }, null, 2));
+        return {
+            content: [{
+                    type: 'text',
+                    text: truncated ? text + '\n\n⚠️ [输出已截断] 绑定数据量较大，请指定 tagCode 缩小范围。' : text,
+                }],
+        };
     }
     catch (err) {
         log('Error in get_tag_bindings:', err.message);

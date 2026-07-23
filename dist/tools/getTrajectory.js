@@ -2,6 +2,7 @@ import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
 import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('get_trajectory', {
     title: 'get_trajectory',
     description: `查询标签的历史行为轨迹。返回时间序列坐标点。
@@ -29,7 +30,7 @@ server.registerTool('get_trajectory', {
 }, async (args) => {
     try {
         const { tagCode, startTime, endTime, mapId, limit } = args;
-        let sql = `SELECT id, tag_code, x, y, map_id, create_time FROM log_behavior_trajectory WHERE tag_code = ?`;
+        let sql = `SELECT id, object_id, x, y, map_id, create_time FROM log_behavior_trajectory WHERE object_id = ?`;
         const params = [tagCode];
         if (startTime !== undefined) {
             sql += " AND create_time >= ?";
@@ -46,11 +47,17 @@ server.registerTool('get_trajectory', {
         sql += ' ORDER BY create_time ASC LIMIT ?';
         params.push(limit);
         const trajectory = await query(sql, params);
-        return { content: [{ type: 'text', text: JSON.stringify({
-                        tagCode, pointCount: trajectory.length, points: trajectory.map(p => ({
-                            id: p.id, x: p.x, y: p.y, mapId: p.map_id, time: p.create_time,
-                        })),
-                    }, null, 2) }] };
+        const { text, truncated } = truncateOutput(JSON.stringify({
+            tagCode, pointCount: trajectory.length, points: trajectory.map(p => ({
+                id: p.id, x: p.x, y: p.y, mapId: p.map_id, time: p.create_time,
+            })),
+        }, null, 2));
+        return {
+            content: [{
+                    type: 'text',
+                    text: truncated ? text + '\n\n⚠️ [输出已截断] 轨迹点过多，请缩小时间范围或减少 limit。' : text,
+                }],
+        };
     }
     catch (err) {
         log('Error in get_trajectory:', err.message);

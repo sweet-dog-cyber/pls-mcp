@@ -12,7 +12,7 @@ catch (err) {
     log('Some tools will not work without MySQL. Starting in partial mode...');
 }
 await registerAllTools();
-log('57 tools registered');
+log('60 tools registered');
 registerAllResources();
 registerAllPrompts();
 const transport = new StdioServerTransport();

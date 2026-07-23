@@ -1,7 +1,8 @@
 import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { READ_ONLY_ANNOTATIONS, TAG_TYPE_MAP, TAG_TYPE_NAME_MAP } from '../constants.js';
+import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('list_tags', {
     title: 'list_tags',
     description: `获取定位标签列表，可按地图或类型筛选。返回标签编码、状态、电量等信息。
@@ -26,11 +27,13 @@ server.registerTool('list_tags', {
     }).strict(),
 }, async (args) => {
     try {
-        const TAG_TYPE_MAP = { 'UWB': 0, 'Bluetooth': 1, 'GPS': 2, 'UWB+GPS': 3, '惯性导航': 4 };
-        const TAG_TYPE_REV = { 0: 'UWB', 1: 'Bluetooth', 2: 'GPS', 3: 'UWB+GPS', 4: '惯性导航' };
-        const { tagType, pageSize, page } = args;
+        const { mapId, tagType, pageSize, page } = args;
         let sql = `SELECT id, tag_code, model, tag_type, status, power, is_bind, marker_file, slice FROM gis_tag WHERE del_flg = 0`;
         const params = [];
+        if (mapId !== undefined) {
+            sql += ' AND map_id = ?';
+            params.push(mapId);
+        }
         if (tagType !== undefined) {
             sql += ' AND tag_type = ?';
             params.push(TAG_TYPE_MAP[tagType] ?? tagType);
@@ -40,19 +43,30 @@ server.registerTool('list_tags', {
         const tags = await query(sql, params);
         let countSql = `SELECT COUNT(*) as total FROM gis_tag WHERE del_flg = 0`;
         const countParams = [];
+        if (mapId !== undefined) {
+            countSql += ' AND map_id = ?';
+            countParams.push(mapId);
+        }
         if (tagType !== undefined) {
             countSql += ' AND tag_type = ?';
             countParams.push(TAG_TYPE_MAP[tagType] ?? tagType);
         }
         const totalRows = await query(countSql, countParams);
         const total = Array.isArray(totalRows) ? totalRows[0]?.total : 0;
+        const result = {
+            total, page, pageSize,
+            tags: tags.map(t => ({
+                id: t.id, tagCode: t.tag_code, model: t.model,
+                tagType: TAG_TYPE_NAME_MAP[t.tag_type] ?? t.tag_type,
+                status: t.status, power: t.power, isBind: t.is_bind ? '1' : '0',
+                markerFile: t.marker_file, slice: t.slice,
+            })),
+        };
+        const { text, truncated } = truncateOutput(JSON.stringify(result, null, 2));
         return {
             content: [{
                     type: 'text',
-                    text: JSON.stringify({ total, page, pageSize, tags: tags.map(t => ({
-                            id: t.id, tagCode: t.tag_code, model: t.model, tagType: TAG_TYPE_REV[t.tag_type] ?? t.tag_type,
-                            status: t.status, power: t.power, isBind: t.is_bind ? '1' : '0', markerFile: t.marker_file, slice: t.slice,
-                        })), }, null, 2),
+                    text: truncated ? text + '\n\n⚠️ [输出已截断] 请缩小筛选范围或调整分页参数。' : text,
                 }],
         };
     }

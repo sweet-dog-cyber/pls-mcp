@@ -2,6 +2,7 @@ import { server, z } from '../server.js';
 import { callAreaPersonnel } from '../api/client.js';
 import { log } from '../config/settings.js';
 import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('get_area_personnel', {
     title: 'get_area_personnel',
     description: `查询某区域内当前的人员。返回区域内所有人员的姓名、标签、位置等信息。
@@ -16,8 +17,14 @@ server.registerTool('get_area_personnel', {
     try {
         const { areaId } = args;
         const personnel = await callAreaPersonnel(areaId);
-        return { content: [{ type: 'text', text: JSON.stringify({ areaId,
-                        count: Array.isArray(personnel) ? personnel.length : 0, personnel }, null, 2) }] };
+        const { text, truncated } = truncateOutput(JSON.stringify({ areaId,
+            count: Array.isArray(personnel) ? personnel.length : 0, personnel }, null, 2));
+        return {
+            content: [{
+                    type: 'text',
+                    text: truncated ? text + '\n\n⚠️ [输出已截断] 该区域人员数据量较大。' : text,
+                }],
+        };
     }
     catch (err) {
         log('Error in get_area_personnel:', err.message);

@@ -2,6 +2,7 @@ import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
 import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('list_personnel', {
     title: 'list_personnel',
     description: `获取人员列表，可按部门或关键词筛选。返回人员姓名、部门、电话、绑定标签等信息。
@@ -48,13 +49,16 @@ server.registerTool('list_personnel', {
         }
         const totalRows = await query(countSql, countParams);
         const total = Array.isArray(totalRows) ? totalRows[0]?.total : 0;
+        const { text, truncated } = truncateOutput(JSON.stringify({
+            total, page, pageSize, personnel: personnel.map(p => ({
+                id: p.id, name: p.name, departmentId: p.department_id, phone: p.phone_number,
+                tagId: p.tag_id, tagCode: p.tag_code,
+            })),
+        }, null, 2));
         return {
             content: [{
                     type: 'text',
-                    text: JSON.stringify({ total, page, pageSize, personnel: personnel.map(p => ({
-                            id: p.id, name: p.name, departmentId: p.department_id, phone: p.phone_number,
-                            tagId: p.tag_id, tagCode: p.tag_code,
-                        })), }, null, 2),
+                    text: truncated ? text + '\n\n⚠️ [输出已截断] 请缩小筛选范围或调整分页参数。' : text,
                 }],
         };
     }

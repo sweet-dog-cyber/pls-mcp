@@ -3,6 +3,7 @@ import { query } from '../db/connection.js';
 import { callRealtimeLocation } from '../api/client.js';
 import { log } from '../config/settings.js';
 import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('get_personnel_location', {
     title: 'get_personnel_location',
     description: `按人员姓名或ID查询实时位置。先查人员的绑定标签，再查标签的实时位置。
@@ -31,22 +32,30 @@ server.registerTool('get_personnel_location', {
         }
         if (personnel.length === 0)
             return { content: [{ type: 'text', text: `未找到人员 "${nameOrId}"` }] };
-        const results = [];
-        for (const p of personnel) {
+        // Parallel API calls with Promise.all for bound personnel
+        const results = await Promise.all(personnel.map(async (p) => {
             if (!p.tag_code) {
-                results.push({ name: p.name, tagCode: null, message: '未绑定标签' });
-                continue;
+                return { name: p.name, tagCode: null, message: '未绑定标签' };
             }
             try {
                 const location = await callRealtimeLocation(p.tag_code);
-                results.push({ name: p.name, tagCode: p.tag_code, x: location.x, y: location.y,
-                    mapCode: location.mapCode, mapName: location.mapName, timestamp: location.timestamp, areaName: location.areaName });
+                return {
+                    name: p.name, tagCode: p.tag_code, x: location.x, y: location.y,
+                    mapCode: location.mapCode, mapName: location.mapName,
+                    timestamp: location.timestamp, areaName: location.areaName,
+                };
             }
             catch (e) {
-                results.push({ name: p.name, tagCode: p.tag_code, message: `位置查询失败: ${e.message}` });
+                return { name: p.name, tagCode: p.tag_code, message: `位置查询失败: ${e.message}` };
             }
-        }
-        return { content: [{ type: 'text', text: JSON.stringify(results, null, 2) }] };
+        }));
+        const { text, truncated } = truncateOutput(JSON.stringify(results, null, 2));
+        return {
+            content: [{
+                    type: 'text',
+                    text: truncated ? text + '\n\n⚠️ [输出已截断]' : text,
+                }],
+        };
     }
     catch (err) {
         log('Error in get_personnel_location:', err.message);

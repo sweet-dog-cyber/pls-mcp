@@ -2,6 +2,7 @@ import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
 import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('get_in_and_out_records', {
     title: 'get_in_and_out_records',
     description: `查询进出区域记录。返回标签、区域、进入/离开时间等信息。可按区域或时间范围筛选。
@@ -46,15 +47,41 @@ server.registerTool('get_in_and_out_records', {
         sql += ' ORDER BY in_date_time DESC LIMIT ? OFFSET ?';
         params.push(pageSize, (page - 1) * pageSize);
         const records = await query(sql, params);
-        return { content: [{ type: 'text', text: JSON.stringify({ page, pageSize, records: records.map(r => ({
-                            id: r.id, tagCode: r.tag_code, areaId: r.area_id, areaRuleId: r.area_rule_id,
-                            inDateTime: r.in_date_time, outDateTime: r.out_date_time,
-                            status: r.out_date_time ? '已离开' : '在场',
-                        })), }, null, 2) }] };
+        // Count total for proper pagination
+        let countSql = `SELECT COUNT(*) as total FROM logs_area_in_and_out WHERE 1=1`;
+        const countParams = [];
+        if (areaId !== undefined) {
+            countSql += ' AND area_id = ?';
+            countParams.push(areaId);
+        }
+        if (timeRange !== undefined) {
+            if (timeRange.includes(',')) {
+                const [start, end] = timeRange.split(',');
+                countSql += ' AND in_date_time >= ? AND in_date_time < DATE_ADD(?, INTERVAL 1 DAY)';
+                countParams.push(start.trim(), end.trim());
+            }
+            else {
+                countSql += ' AND in_date_time >= ? AND in_date_time < DATE_ADD(?, INTERVAL 1 DAY)';
+                countParams.push(timeRange.trim(), timeRange.trim());
+            }
+        }
+        const totalRows = await query(countSql, countParams);
+        const total = Array.isArray(totalRows) ? totalRows[0]?.total : 0;
+        const { text, truncated } = truncateOutput(JSON.stringify({ total, page, pageSize, records: records.map(r => ({
+                id: r.id, tagCode: r.tag_code, areaId: r.area_id, areaRuleId: r.area_rule_id,
+                inDateTime: r.in_date_time, outDateTime: r.out_date_time,
+                status: r.out_date_time ? '已离开' : '在场',
+            })), }, null, 2));
+        return {
+            content: [{
+                    type: 'text',
+                    text: truncated ? text + '\n\n⚠️ [输出已截断] 请缩小时间范围或调整分页参数。' : text,
+                }],
+        };
     }
     catch (err) {
         log('Error in get_in_and_out_records:', err.message);
-        return { content: [{ type: 'text', text: `Error: 查询进出记录失败 - ${err.message}` }], isError: true };
+        return { content: [{ type: 'text', text: `Error: 查询进出记录失败 - ${err.message}。建议：缩小时间范围或检查筛选条件。` }], isError: true };
     }
 });
 //# sourceMappingURL=getInOutRecords.js.map

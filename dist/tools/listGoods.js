@@ -2,6 +2,7 @@ import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
 import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('list_goods', {
     title: 'list_goods',
     description: `获取物品/货物列表，可按名称或绑定状态筛选。
@@ -47,9 +48,15 @@ server.registerTool('list_goods', {
         }
         const totalRows = await query(countSql, countParams);
         const total = Array.isArray(totalRows) ? totalRows[0]?.total : 0;
-        return { content: [{ type: 'text', text: JSON.stringify({ total, page, pageSize, goods: goods.map(g => ({
-                            id: g.id, code: g.code, name: g.name, tagId: g.tag_id, tagCode: g.tag_code,
-                        })), }, null, 2) }] };
+        const { text, truncated } = truncateOutput(JSON.stringify({ total, page, pageSize, goods: goods.map(g => ({
+                id: g.id, code: g.code, name: g.name, tagId: g.tag_id, tagCode: g.tag_code,
+            })), }, null, 2));
+        return {
+            content: [{
+                    type: 'text',
+                    text: truncated ? text + '\n\n⚠️ [输出已截断] 请缩小筛选范围或调整分页参数。' : text,
+                }],
+        };
     }
     catch (err) {
         log('Error in list_goods:', err.message);

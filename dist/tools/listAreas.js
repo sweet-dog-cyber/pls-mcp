@@ -2,6 +2,7 @@ import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
 import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('list_areas', {
     title: 'list_areas',
     description: `获取区域列表，可按地图筛选。返回区域名称、类型、所属地图等信息。
@@ -21,11 +22,17 @@ server.registerTool('list_areas', {
             sql += ' AND map_id = ?';
             params.push(mapId);
         }
-        sql += ' ORDER BY name ASC';
+        sql += ' ORDER BY name ASC LIMIT 2000';
         const areas = await query(sql, params);
-        return { content: [{ type: 'text', text: JSON.stringify({ total: areas.length, areas: areas.map(a => ({
-                            id: a.id, name: a.name, mapId: a.map_id, areaType: a.area_type,
-                        })), }, null, 2) }] };
+        const { text, truncated } = truncateOutput(JSON.stringify({ total: areas.length, areas: areas.map(a => ({
+                id: a.id, name: a.name, mapId: a.map_id, areaType: a.area_type,
+            })), }, null, 2));
+        return {
+            content: [{
+                    type: 'text',
+                    text: truncated ? text + '\n\n⚠️ [输出已截断] 返回了前 2000 条记录。' : text,
+                }],
+        };
     }
     catch (err) {
         log('Error in list_areas:', err.message);

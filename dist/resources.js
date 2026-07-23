@@ -2,6 +2,7 @@ import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { query } from './db/connection.js';
 import { callListTags, callTagBindings } from './api/client.js';
 import { log } from './config/settings.js';
+import { ALARM_TYPE_NAME_MAP } from './constants.js';
 export function registerResources(server) {
     // 1. Database schema info
     server.registerResource('pls_schema', 'pls://schema', {
@@ -41,13 +42,9 @@ export function registerResources(server) {
             const positions = allLocations.filter((p) => p.mapCode === mapCode);
             let bindingsMap = {};
             try {
+                // callTagBindings now returns unified array format
                 const bindData = await callTagBindings();
-                if (typeof bindData === 'object' && !Array.isArray(bindData)) {
-                    bindingsMap = bindData;
-                }
-                else if (Array.isArray(bindData)) {
-                    bindData.forEach((b) => { bindingsMap[b.tagCode] = b.bindName; });
-                }
+                bindData.forEach((b) => { bindingsMap[b.tagCode] = b.bindName; });
             }
             catch { }
             const enriched = positions.map((p) => ({
@@ -76,17 +73,13 @@ export function registerResources(server) {
         try {
             const rows = await query(`SELECT id, name, alarm_type, thresholds, monitored_period
            FROM gis_alarm_rule WHERE del_flg = 0 ORDER BY create_time DESC`);
-            const alarmTypeMap = {
-                0: '入侵告警', 1: '越界告警', 2: '超限告警',
-                3: '低位告警', 4: '超时告警', 5: '低电告警', 6: '超速告警',
-            };
             return {
                 contents: [{
                         uri: uri.href,
                         mimeType: 'application/json',
                         text: JSON.stringify(rows.map((r) => ({
                             id: r.id, name: r.name, alarmType: r.alarm_type,
-                            alarmTypeName: alarmTypeMap[r.alarm_type] || '',
+                            alarmTypeName: ALARM_TYPE_NAME_MAP[r.alarm_type] || '',
                             thresholds: r.thresholds, monitoredPeriod: r.monitored_period,
                         })), null, 2),
                     }],

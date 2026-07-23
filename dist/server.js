@@ -27,6 +27,8 @@ export async function registerAllTools() {
     await import('./tools/external.js');
     await import('./tools/write.js');
     await import('./tools/crud.js');
+    await import('./tools/healthCheck.js');
+    await import('./tools/getBatchTagLocations.js');
 }
 export function registerAllResources() {
     registerResources(server);

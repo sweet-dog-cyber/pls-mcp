@@ -1,7 +1,8 @@
 import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { READ_ONLY_ANNOTATIONS, CAR_TYPE_MAP } from '../constants.js';
+import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('list_cars', {
     title: 'list_cars',
     description: `获取车辆列表，可按车辆类型、车牌号或绑定状态筛选。
@@ -57,13 +58,18 @@ server.registerTool('list_cars', {
         }
         const totalRows = await query(countSql, countParams);
         const total = Array.isArray(totalRows) ? totalRows[0]?.total : 0;
-        const carTypeMap = { 0: '夹包车', 1: '转运车', 2: '正面吊' };
-        return { content: [{ type: 'text', text: JSON.stringify({ total, page, pageSize, cars: cars.map(c => ({
-                            id: c.id, carType: c.car_type, carTypeName: carTypeMap[c.car_type] || '',
-                            carCode: c.car_code, carBrand: c.car_brand, carModel: c.car_model,
-                            plateNumber: c.machine_code, tagId: c.tag_id, tagCode: c.tag_code,
-                            hasWeightDevice: c.has_weight_device,
-                        })), }, null, 2) }] };
+        const { text, truncated } = truncateOutput(JSON.stringify({ total, page, pageSize, cars: cars.map(c => ({
+                id: c.id, carType: c.car_type, carTypeName: CAR_TYPE_MAP[c.car_type] || '',
+                carCode: c.car_code, carBrand: c.car_brand, carModel: c.car_model,
+                plateNumber: c.machine_code, tagId: c.tag_id, tagCode: c.tag_code,
+                hasWeightDevice: c.has_weight_device,
+            })), }, null, 2));
+        return {
+            content: [{
+                    type: 'text',
+                    text: truncated ? text + '\n\n⚠️ [输出已截断] 请缩小筛选范围或调整分页参数。' : text,
+                }],
+        };
     }
     catch (err) {
         log('Error in list_cars:', err.message);

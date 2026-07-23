@@ -2,6 +2,7 @@ import { server, z } from '../server.js';
 import { callListTags, callTagBindings } from '../api/client.js';
 import { log } from '../config/settings.js';
 import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('list_realtime_map', {
     title: 'list_realtime_map',
     description: `获取指定地图上所有标签的实时位置快照。适合用于展示实时地图。
@@ -19,12 +20,11 @@ server.registerTool('list_realtime_map', {
         const { mapCode } = args;
         // Get all real-time locations from Java API
         const allLocations = await callListTags();
+        // callTagBindings now returns unified array with built-in cache
         const bindings = {};
         try {
             const bindData = await callTagBindings();
-            if (Array.isArray(bindData)) {
-                bindData.forEach((b) => { bindings[b.tagCode] = b.bindName; });
-            }
+            bindData.forEach((b) => { bindings[b.tagCode] = b.bindName; });
         }
         catch (e) {
             log(`Warning: failed to fetch bindings: ${e.message}`);
@@ -45,9 +45,15 @@ server.registerTool('list_realtime_map', {
             power: p.power,
             timestamp: p.timestamp,
         }));
-        return { content: [{ type: 'text', text: JSON.stringify({
-                        count: enriched.length, mapCode, positions: enriched
-                    }, null, 2) }] };
+        const { text, truncated } = truncateOutput(JSON.stringify({
+            count: enriched.length, mapCode, positions: enriched
+        }, null, 2));
+        return {
+            content: [{
+                    type: 'text',
+                    text: truncated ? text + '\n\n⚠️ [输出已截断] 该地图标签数据量较大。' : text,
+                }],
+        };
     }
     catch (err) {
         log('Error in list_realtime_map:', err.message);

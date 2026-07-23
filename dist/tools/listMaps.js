@@ -2,6 +2,7 @@ import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
 import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('list_maps', {
     title: 'list_maps',
     description: '获取地图列表。返回地图编码、名称、所属楼栋等信息。无需参数。',
@@ -9,10 +10,16 @@ server.registerTool('list_maps', {
     inputSchema: z.object({}).strict(),
 }, async () => {
     try {
-        const maps = await query(`SELECT id, code, name, building_id FROM gis_map ORDER BY code ASC`, []);
-        return { content: [{ type: 'text', text: JSON.stringify({ total: maps.length, maps: maps.map(m => ({
-                            id: m.id, code: m.code, name: m.name, buildingId: m.building_id,
-                        })), }, null, 2) }] };
+        const maps = await query(`SELECT id, code, name, building_id FROM gis_map ORDER BY code ASC LIMIT 2000`, []);
+        const { text, truncated } = truncateOutput(JSON.stringify({ total: maps.length, maps: maps.map(m => ({
+                id: m.id, code: m.code, name: m.name, buildingId: m.building_id,
+            })), }, null, 2));
+        return {
+            content: [{
+                    type: 'text',
+                    text: truncated ? text + '\n\n⚠️ [输出已截断] 返回了前 2000 条记录。' : text,
+                }],
+        };
     }
     catch (err) {
         log('Error in list_maps:', err.message);

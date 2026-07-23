@@ -8,7 +8,9 @@ export async function getPool() {
     try {
         const conn = await pool.getConnection();
         conn.release();
-        console.error('[PLS-MCP] MySQL connected successfully');
+        if (appConfig.mcp.logLevel === 'debug' || appConfig.mcp.logLevel === 'info') {
+            console.error('[PLS-MCP] MySQL connected successfully');
+        }
     }
     catch (err) {
         console.error('[PLS-MCP] MySQL connection failed:', err.message);

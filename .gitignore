@@ -1,10 +1,50 @@
+# Dependencies
 node_modules/
-.env
-*.tgz
-*.log
+
+# Build output
+dist/
+
+# OS files
 .DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
 .idea/
-src/
-tsconfig.json
-*.zip
-test_env.mjs
+.vscode/
+*.iml
+
+# Logs
+*.log
+*.err
+logs/
+
+# Runtime
+app.err
+app.log
+
+# Temp files
+*.tmp
+*.temp
+
+# Test artifacts
+test_results.txt
+
+# Docker
+BOOT-INF/
+
+# CI/CD
+.gitlab-ci.yml.deployed
+
+# Minecraft
+.codegraph/
+.reasonix/
+
+# Environment (actual values)
+.env.local
+.env.production
+
+# Publish archive
+*.tgz

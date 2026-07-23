@@ -4,9 +4,9 @@ export const appConfig = {
     mysql: {
         host: process.env.PLS_MYSQL_HOST || '192.168.10.221',
         port: parseInt(process.env.PLS_MYSQL_PORT || '3306'),
-        user: process.env.PLS_MYSQL_USER || 'root',
-        password: process.env.PLS_MYSQL_PASSWORD || 'root',
-        database: process.env.PLS_MYSQL_DATABASE || 'ishz_pls_six_zhongchechangjiang',
+        user: process.env.PLS_MYSQL_USER || '',
+        password: process.env.PLS_MYSQL_PASSWORD || '',
+        database: process.env.PLS_MYSQL_DATABASE || '',
         charset: 'utf8mb4',
         connectionLimit: 10,
         connectTimeout: 10000,
@@ -20,6 +20,23 @@ export const appConfig = {
         logLevel: process.env.MCP_LOG_LEVEL || 'info',
     },
 };
+// Validate required config
+function validateConfig() {
+    const missing = [];
+    if (!appConfig.mysql.user)
+        missing.push('PLS_MYSQL_USER');
+    if (!appConfig.mysql.password)
+        missing.push('PLS_MYSQL_PASSWORD');
+    if (!appConfig.mysql.database)
+        missing.push('PLS_MYSQL_DATABASE');
+    if (missing.length > 0) {
+        console.error('[PLS-MCP] Missing required environment variables: ' + missing.join(', '));
+        console.error('[PLS-MCP] Please configure them in .env file or export them.');
+        console.error('[PLS-MCP] See .env.example for reference.');
+        throw new Error('Missing required environment variables: ' + missing.join(', '));
+    }
+}
+validateConfig();
 export function log(...args) {
     if (appConfig.mcp.logLevel === 'debug' || appConfig.mcp.logLevel === 'info') {
         console.error('[PLS-MCP]', ...args);
