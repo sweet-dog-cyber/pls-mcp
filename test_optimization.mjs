@@ -78,7 +78,7 @@ function assert(name, cond, detail = '') {
     console.log('\n━━━ 2. 工具数量 & 安全标注 ━━━');
     const tl = await req('tools/list');
     const tools = tl.result.tools || [];
-    assert('工具总数 = 60', tools.length === 60, `实际 ${tools.length}`);
+    assert('工具总数 = 66', tools.length === 66, `实际 ${tools.length}`);
 
     const destructive = tools.filter(t => t.annotations?.destructiveHint === true).length;
     const readOnly = tools.filter(t => t.annotations?.readOnlyHint === true).length;
@@ -238,7 +238,7 @@ function assert(name, cond, detail = '') {
       assert('service 字段存在', 'service' in d14);
       assert('mysql 状态正常', d14.mysql.status === 'healthy', `实际 ${d14.mysql.status}`);
       assert('javaApi 状态正常', d14.javaApi.status === 'healthy', `实际 ${d14.javaApi.status}`);
-      assert('tools 数量 = 60', d14.tools.count === 60, `实际 ${d14.tools.count}`);
+      assert('tools 数量 = 66', d14.tools.count === 66, `实际 ${d14.tools.count}`);
       console.log(`   MySQL: ${d14.mysql.status}, JavaAPI: ${d14.javaApi.status}, tools: ${d14.tools.count}`);
     } catch (e) { assert('pls_health_check', false, e.message); }
 

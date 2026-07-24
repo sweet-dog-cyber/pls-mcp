@@ -43,7 +43,7 @@ server.registerTool('pls_health_check', {
     result.javaApi = { status: 'unhealthy', detail: err.message };
   }
 
-  result.tools = { status: 'healthy', count: 60 };
+  result.tools = { status: 'healthy', count: 66 };
 
   // O3: performance metrics
   const metrics = getMetricsSummary();

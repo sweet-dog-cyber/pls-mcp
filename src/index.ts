@@ -14,7 +14,7 @@ try {
 }
 
 await registerAllTools();
-log('60 tools registered');
+log('66 tools registered');
 
 registerAllResources();
 registerAllPrompts();

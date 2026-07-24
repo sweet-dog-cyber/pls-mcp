@@ -40,6 +40,10 @@ export async function registerAllTools() {
     await import('./tools/crud.js');
     await import('./tools/healthCheck.js');
     await import('./tools/getBatchTagLocations.js');
+    // Phase 4: 新增工具
+    await import('./tools/getLowPowerTags.js');
+    await import('./tools/searchPersonnel.js');
+    await import('./tools/alarmTools.js');
 }
 export function registerAllResources() {
     registerResources(server);
