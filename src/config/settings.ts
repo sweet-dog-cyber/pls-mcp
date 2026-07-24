@@ -1,5 +1,14 @@
 import * as dotenv from 'dotenv';
+import pino from 'pino';
 dotenv.config();
+
+// ── O2: Pino structured logger (stderr, JSON format) ──
+export const logger = pino({
+  level: process.env.MCP_LOG_LEVEL || 'info',
+  formatters: {
+    level: (label) => ({ level: label.toUpperCase() }),
+  },
+});
 
 export const appConfig = {
   mysql: {
@@ -40,7 +49,6 @@ function validateConfig() {
 validateConfig();
 
 export function log(...args: any[]) {
-  if (appConfig.mcp.logLevel === 'debug' || appConfig.mcp.logLevel === 'info') {
-    console.error('[PLS-MCP]', ...args);
-  }
+  // O2: use pino structured logger (backward compatible)
+  logger.info('[PLS-MCP] ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
 }

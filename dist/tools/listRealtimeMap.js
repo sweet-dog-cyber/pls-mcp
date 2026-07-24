@@ -12,7 +12,7 @@ server.registerTool('list_realtime_map', {
 
 返回: 地图上所有标签的实时位置，含坐标、绑定名称、电量
 
-提示: 适合用于展示实时地图。bindings 有 30 秒缓存。`,
+提示: mapCode 会传至 Java API 端过滤，仅返回该地图数据。bindings 有 30 秒缓存。`,
     annotations: QUERY_ANNOTATIONS,
     inputSchema: z.object({
         mapCode: z.string().describe('地图编码，如 "map_001"'),
@@ -20,22 +20,15 @@ server.registerTool('list_realtime_map', {
 }, async (args) => {
     try {
         const { mapCode } = args;
-        const allLocations = await callListTags();
-        const bindings = {};
-        try {
-            const bindData = await callTagBindings();
-            bindData.forEach((b) => { bindings[b.tagCode] = b.bindName; });
-        }
-        catch (e) {
-            log(`Warning: failed to fetch bindings: ${e.message}`);
-        }
-        let positions = allLocations;
-        if (mapCode) {
-            positions = allLocations.filter((p) => p.mapCode === mapCode);
-        }
+        // P3: 传 mapCode 至服务端过滤，仅拉取该地图标签，减少网络传输 + 本地过滤开销
+        const positions = await callListTags(mapCode);
+        // P3: 使用缓存 bindings（30s TTL），无需额外 API 调用
+        const bindings = await callTagBindings();
+        const bindingsMap = {};
+        bindings.forEach((b) => { bindingsMap[b.tagCode] = b.bindName; });
         const enriched = positions.map((p) => ({
             tagCode: p.tagCode, x: p.x, y: p.y, mapCode: p.mapCode,
-            mapName: p.mapName, bindName: bindings[p.tagCode] || '',
+            mapName: p.mapName, bindName: bindingsMap[p.tagCode] || '',
             power: p.power, timestamp: p.timestamp,
         }));
         const { text, truncated } = truncateOutput(JSON.stringify({

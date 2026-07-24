@@ -2,8 +2,20 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { registerResources } from './resources.js';
 import { registerPrompts } from './prompts.js';
+import { collectMetrics } from './utils/metrics.js';
 
 export const server = new McpServer({ name: 'pls-mcp', version: '1.0.0' });
+
+// ── O3: Patch registerTool to collect performance metrics ──
+{ 
+  const _orig = server.registerTool.bind(server) as (...args: any[]) => any;
+  (server as any).registerTool = (name: string, ...rest: any[]) => {
+    if (rest.length === 2) {
+      rest[1] = collectMetrics(name, rest[1]);
+    }
+    return _orig(name, ...rest);
+  };
+}
 export { z };
 
 export async function registerAllTools() {
@@ -40,3 +52,5 @@ export function registerAllResources() {
 export function registerAllPrompts() {
   registerPrompts(server);
 }
+
+export { collectMetrics } from './utils/metrics.js';

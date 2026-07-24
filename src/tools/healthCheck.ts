@@ -2,6 +2,7 @@ import { server, z } from '../server.js';
 import { getPool } from '../db/connection.js';
 import { log } from '../config/settings.js';
 import { DIAGNOSE_ANNOTATIONS } from '../constants.js';
+import { getMetricsSummary } from '../utils/metrics.js';
 
 server.registerTool('pls_health_check', {
   title: 'pls_health_check',
@@ -43,6 +44,10 @@ server.registerTool('pls_health_check', {
   }
 
   result.tools = { status: 'healthy', count: 60 };
+
+  // O3: performance metrics
+  const metrics = getMetricsSummary();
+  result.metrics = metrics;
 
   return {
     content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
