@@ -53,7 +53,7 @@ export async function getMcpRealtime(path, params, timeout) {
 }
 export async function callRealtimeLocation(tagCode, timeout) {
     const res = await getMcpRealtime(`location/${tagCode}`, undefined, timeout);
-    if (!res || res.status !== 200) {
+    if (!res || res.code !== 200) {
         throw new Error(`Failed to get location for ${tagCode}: ${res?.message || 'unknown'}`);
     }
     if (!res.result) {
@@ -88,7 +88,7 @@ export async function callTagBindings() {
  */
 async function fetchAllBindings() {
     const res = await getMcpRealtime('bindings');
-    if (!res || res.status !== 200) {
+    if (!res || res.code !== 200) {
         throw new Error(`Failed to get bindings: ${res?.message || 'unknown'}`);
     }
     const raw = res.result;
@@ -136,7 +136,7 @@ export function invalidateBindingsCache() {
 }
 export async function callAreaPersonnel(areaId, timeout) {
     const res = await getMcpRealtime(`in-area/${areaId}`, undefined, timeout);
-    if (!res || res.status !== 200) {
+    if (!res || res.code !== 200) {
         throw new Error(`Failed to get personnel in area ${areaId}: ${res?.message || 'unknown'}`);
     }
     if (!res.result) {
@@ -146,7 +146,7 @@ export async function callAreaPersonnel(areaId, timeout) {
 }
 export async function callSystemStats(timeout) {
     const res = await getMcpRealtime('stats', undefined, timeout);
-    if (!res || res.status !== 200) {
+    if (!res || res.code !== 200) {
         throw new Error(`Failed to get system stats: ${res?.message || 'unknown'}`);
     }
     if (!res.result) {
@@ -162,7 +162,7 @@ export async function callSystemStats(timeout) {
 export async function callListTags(mapCode, timeout) {
     const params = mapCode ? { mapCode } : undefined;
     const res = await getMcpRealtime('tags', params, timeout);
-    if (!res || res.status !== 200) {
+    if (!res || res.code !== 200) {
         throw new Error(`Failed to get tags: ${res?.message || 'unknown'}`);
     }
     if (!res.result) {

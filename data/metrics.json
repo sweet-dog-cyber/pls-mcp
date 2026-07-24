@@ -155,10 +155,130 @@
       "duration": 2.03,
       "success": true,
       "timestamp": "2026-07-24T02:37:40.529Z"
+    },
+    {
+      "tool": "pls_health_check",
+      "duration": 231.72,
+      "success": true,
+      "timestamp": "2026-07-24T03:18:57.073Z"
+    },
+    {
+      "tool": "pls_health_check",
+      "duration": 11.35,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:00.665Z"
+    },
+    {
+      "tool": "list_tags",
+      "duration": 7.45,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:00.702Z"
+    },
+    {
+      "tool": "get_tag_location",
+      "duration": 27.51,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:00.738Z"
+    },
+    {
+      "tool": "list_personnel",
+      "duration": 4.69,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:00.748Z"
+    },
+    {
+      "tool": "get_tag_bindings",
+      "duration": 12.8,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:00.774Z"
+    },
+    {
+      "tool": "list_areas",
+      "duration": 3.87,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:00.783Z"
+    },
+    {
+      "tool": "get_area_personnel",
+      "duration": 16,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:00.806Z"
+    },
+    {
+      "tool": "list_alarms",
+      "duration": 5.97,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:00.818Z"
+    },
+    {
+      "tool": "list_alarms",
+      "duration": 5.48,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:00.829Z"
+    },
+    {
+      "tool": "get_in_and_out_records",
+      "duration": 11.51,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:00.847Z"
+    },
+    {
+      "tool": "list_anchors",
+      "duration": 2.36,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:00.853Z"
+    },
+    {
+      "tool": "list_maps",
+      "duration": 2.48,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:00.859Z"
+    },
+    {
+      "tool": "list_realtime_map",
+      "duration": 52.67,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:00.918Z"
+    },
+    {
+      "tool": "get_trajectory",
+      "duration": 381.09,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:01.305Z"
+    },
+    {
+      "tool": "list_cars",
+      "duration": 3.59,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:01.311Z"
+    },
+    {
+      "tool": "list_goods",
+      "duration": 4.63,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:01.319Z"
+    },
+    {
+      "tool": "list_alarm_rules",
+      "duration": 2.16,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:01.326Z"
+    },
+    {
+      "tool": "list_area_rules",
+      "duration": 2.16,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:01.331Z"
+    },
+    {
+      "tool": "list_departments",
+      "duration": 2.28,
+      "success": true,
+      "timestamp": "2026-07-24T03:19:01.338Z"
     }
   ],
-  "totalCalls": 26,
+  "totalCalls": 46,
   "totalErrors": 0,
   "startedAt": "2026-07-24T02:25:56.314Z",
-  "lastFlush": "2026-07-24T02:37:41.873Z"
+  "lastFlush": "2026-07-24T03:19:02.676Z"
 }
