@@ -53,7 +53,11 @@ registerWriteTool('pls_bind_tag_to_person',
 参数:
   - confirm: 二次确认（必填），必须传 "确认"
   - entityId: 人员ID（必填）
-  - tagId: 标签ID（必填）`,
+  - tagId: 标签ID（必填）
+
+返回: 操作结果
+
+提示: 确认绑定关系后再执行`,
   'bind/person', true);
 
 registerWriteTool('pls_unbind_tag_from_person',
@@ -61,7 +65,11 @@ registerWriteTool('pls_unbind_tag_from_person',
 
 参数:
   - confirm: 二次确认（必填），必须传 "确认"
-  - entityId: 人员ID（必填）`,
+  - entityId: 人员ID（必填）
+
+返回: 操作结果
+
+提示: 解绑后人员失去定位能力`,
   'unbind/person', false);
 
 // ── Car bind/unbind ──
@@ -71,7 +79,11 @@ registerWriteTool('pls_bind_tag_to_car',
 参数:
   - confirm: 二次确认（必填），必须传 "确认"
   - entityId: 车辆ID（必填）
-  - tagId: 标签ID（必填）`,
+  - tagId: 标签ID（必填）
+
+返回: 操作结果
+
+提示: 确认绑定关系后再执行`,
   'bind/car', true);
 
 registerWriteTool('pls_unbind_tag_from_car',
@@ -79,7 +91,11 @@ registerWriteTool('pls_unbind_tag_from_car',
 
 参数:
   - confirm: 二次确认（必填），必须传 "确认"
-  - entityId: 车辆ID（必填）`,
+  - entityId: 车辆ID（必填）
+
+返回: 操作结果
+
+提示: 解绑后车辆失去定位能力`,
   'unbind/car', false);
 
 // ── Goods bind/unbind ──
@@ -89,7 +105,11 @@ registerWriteTool('pls_bind_tag_to_goods',
 参数:
   - confirm: 二次确认（必填），必须传 "确认"
   - entityId: 物品ID（必填）
-  - tagId: 标签ID（必填）`,
+  - tagId: 标签ID（必填）
+
+返回: 操作结果
+
+提示: 确认绑定关系后再执行`,
   'bind/goods', true);
 
 registerWriteTool('pls_unbind_tag_from_goods',
@@ -97,5 +117,9 @@ registerWriteTool('pls_unbind_tag_from_goods',
 
 参数:
   - confirm: 二次确认（必填），必须传 "确认"
-  - entityId: 物品ID（必填）`,
+  - entityId: 物品ID（必填）
+
+返回: 操作结果
+
+提示: 解绑后物品失去定位能力`,
   'unbind/goods', false);

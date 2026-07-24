@@ -12,7 +12,7 @@ server.registerTool('pls_send_sos_alarm', {
 
 返回: 操作是否成功
 
-⚠️ 警告: 此操作会触发真实告警通知，请谨慎使用！仅在确认紧急情况下调用。`,
+提示: 会触发真实告警通知，请谨慎使用！仅紧急情况调用。最多 100 个标签。`,
     annotations: MANAGE_ANNOTATIONS,
     inputSchema: z.object({
         confirm: z.literal('确认').describe('⚠️ 危险操作需二次确认，必须传 "确认"'),

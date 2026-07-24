@@ -47,7 +47,9 @@ function registerCrudTool(name: string, entity: EntityType, action: 'add' | 'upd
   - confirm: 二次确认（必填），必须传 "确认"
 ${isDelete ? '  - ids: ID数组（必填），要删除的实体ID列表\n' : ''}  - 根据实体类型传入对应字段
 
-注意: ${action === 'delete' ? '删除操作不可撤销！请确认后再执行' : action === 'update' ? '更新需确认。只传需要设置的字段' : '只传需要设置的字段'}
+返回: {success: true/false, entity: 实体名称, action: 操作类型}
+
+提示: ${action === 'delete' ? '删除不可撤销！' : action === 'update' ? '确认+只传需改字段' : '确认+只传必填字段'}
 `,
     annotations,
     inputSchema: finalSchema,

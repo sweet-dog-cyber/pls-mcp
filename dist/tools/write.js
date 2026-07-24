@@ -48,34 +48,58 @@ registerWriteTool('pls_bind_tag_to_person', `将标签绑定到人员。
 参数:
   - confirm: 二次确认（必填），必须传 "确认"
   - entityId: 人员ID（必填）
-  - tagId: 标签ID（必填）`, 'bind/person', true);
+  - tagId: 标签ID（必填）
+
+返回: 操作结果
+
+提示: 确认绑定关系后再执行`, 'bind/person', true);
 registerWriteTool('pls_unbind_tag_from_person', `解除人员与标签的绑定。
 
 参数:
   - confirm: 二次确认（必填），必须传 "确认"
-  - entityId: 人员ID（必填）`, 'unbind/person', false);
+  - entityId: 人员ID（必填）
+
+返回: 操作结果
+
+提示: 解绑后人员失去定位能力`, 'unbind/person', false);
 // ── Car bind/unbind ──
 registerWriteTool('pls_bind_tag_to_car', `将标签绑定到车辆。
 
 参数:
   - confirm: 二次确认（必填），必须传 "确认"
   - entityId: 车辆ID（必填）
-  - tagId: 标签ID（必填）`, 'bind/car', true);
+  - tagId: 标签ID（必填）
+
+返回: 操作结果
+
+提示: 确认绑定关系后再执行`, 'bind/car', true);
 registerWriteTool('pls_unbind_tag_from_car', `解除车辆与标签的绑定。
 
 参数:
   - confirm: 二次确认（必填），必须传 "确认"
-  - entityId: 车辆ID（必填）`, 'unbind/car', false);
+  - entityId: 车辆ID（必填）
+
+返回: 操作结果
+
+提示: 解绑后车辆失去定位能力`, 'unbind/car', false);
 // ── Goods bind/unbind ──
 registerWriteTool('pls_bind_tag_to_goods', `将标签绑定到物品/货物。
 
 参数:
   - confirm: 二次确认（必填），必须传 "确认"
   - entityId: 物品ID（必填）
-  - tagId: 标签ID（必填）`, 'bind/goods', true);
+  - tagId: 标签ID（必填）
+
+返回: 操作结果
+
+提示: 确认绑定关系后再执行`, 'bind/goods', true);
 registerWriteTool('pls_unbind_tag_from_goods', `解除物品/货物与标签的绑定。
 
 参数:
   - confirm: 二次确认（必填），必须传 "确认"
-  - entityId: 物品ID（必填）`, 'unbind/goods', false);
+  - entityId: 物品ID（必填）
+
+返回: 操作结果
+
+提示: 解绑后物品失去定位能力`, 'unbind/goods', false);
 //# sourceMappingURL=write.js.map
