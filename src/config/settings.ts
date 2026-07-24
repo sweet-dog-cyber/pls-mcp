@@ -14,7 +14,7 @@ export const appConfig = {
   },
   api: {
     baseUrl: process.env.PLS_API_BASE_URL || 'http://127.0.0.1:8180/pls',
-    timeout: 10000,
+    timeout: parseInt(process.env.PLS_API_TIMEOUT || '10000'),
     apiKey: process.env.PLS_MCP_API_KEY || '',
   },
   mcp: {

@@ -65,15 +65,15 @@ async function fetchWithRetry(fn: () => Promise<any>, maxRetries = 2): Promise<a
   throw lastError;
 }
 
-export async function getMcpRealtime(path: string, params?: Record<string, any>) {
+export async function getMcpRealtime(path: string, params?: Record<string, any>, timeout?: number) {
   const client = getApiClient();
   return fetchWithRetry(() =>
-    client.get(`/mcp/realtime/${path}`, { params }).then(r => r.data)
+    client.get(`/mcp/realtime/${path}`, { params, timeout }).then(r => r.data)
   );
 }
 
-export async function callRealtimeLocation(tagCode: string) {
-  const res = await getMcpRealtime(`location/${tagCode}`);
+export async function callRealtimeLocation(tagCode: string, timeout?: number) {
+  const res = await getMcpRealtime(`location/${tagCode}`, undefined, timeout);
   if (!res || res.status !== 200) {
     throw new Error(`Failed to get location for ${tagCode}: ${res?.message || 'unknown'}`);
   }
@@ -135,8 +135,8 @@ export function invalidateBindingsCache() {
   bindingsCacheTime = 0;
 }
 
-export async function callAreaPersonnel(areaId: number) {
-  const res = await getMcpRealtime(`in-area/${areaId}`);
+export async function callAreaPersonnel(areaId: number, timeout?: number) {
+  const res = await getMcpRealtime(`in-area/${areaId}`, undefined, timeout);
   if (!res || res.status !== 200) {
     throw new Error(`Failed to get personnel in area ${areaId}: ${res?.message || 'unknown'}`);
   }
@@ -146,8 +146,8 @@ export async function callAreaPersonnel(areaId: number) {
   return res.result;
 }
 
-export async function callSystemStats() {
-  const res = await getMcpRealtime('stats');
+export async function callSystemStats(timeout?: number) {
+  const res = await getMcpRealtime('stats', undefined, timeout);
   if (!res || res.status !== 200) {
     throw new Error(`Failed to get system stats: ${res?.message || 'unknown'}`);
   }
@@ -157,8 +157,14 @@ export async function callSystemStats() {
   return res.result;
 }
 
-export async function callListTags() {
-  const res = await getMcpRealtime('tags');
+/**
+ * 获取标签实时位置。
+ * @param mapCode 可选 — 按地图编码服务端过滤，减少数据传输量
+ * @param timeout 可选 — 请求超时（ms），不传则使用全局默认值
+ */
+export async function callListTags(mapCode?: string, timeout?: number) {
+  const params = mapCode ? { mapCode } : undefined;
+  const res = await getMcpRealtime('tags', params, timeout);
   if (!res || res.status !== 200) {
     throw new Error(`Failed to get tags: ${res?.message || 'unknown'}`);
   }
