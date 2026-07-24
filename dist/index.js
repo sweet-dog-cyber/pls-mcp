@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { server, registerAllTools, registerAllResources, registerAllPrompts } from './server.js';
+import { server, registerAllTools, registerAllResources, registerAllPrompts, flushMetrics } from './server.js';
 import { log } from './config/settings.js';
 import { getPool, closePool } from './db/connection.js';
 try {
@@ -20,11 +20,13 @@ await server.connect(transport);
 log('PLS MCP Server started (STDIO mode)');
 process.on('SIGINT', async () => {
     log('Shutting down...');
+    flushMetrics(); // M1: 刷盘持久化指标
     await closePool();
     process.exit(0);
 });
 process.on('SIGTERM', async () => {
     log('Shutting down...');
+    flushMetrics(); // M1: 刷盘持久化指标
     await closePool();
     process.exit(0);
 });

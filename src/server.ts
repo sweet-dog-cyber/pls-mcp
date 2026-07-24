@@ -2,9 +2,14 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { registerResources } from './resources.js';
 import { registerPrompts } from './prompts.js';
-import { collectMetrics } from './utils/metrics.js';
+import { collectMetrics, initMetrics, flushMetrics } from './utils/metrics.js';
 
 export const server = new McpServer({ name: 'pls-mcp', version: '1.0.0' });
+
+// ── M1: 初始化持久化指标 ──
+initMetrics();
+
+export { flushMetrics };
 
 // ── O3: Patch registerTool to collect performance metrics ──
 { 

@@ -1,0 +1,44 @@
+{
+  "entries": [
+    {
+      "tool": "pls_health_check",
+      "duration": 19.9,
+      "success": true,
+      "timestamp": "2026-07-24T02:25:56.404Z"
+    },
+    {
+      "tool": "list_tags",
+      "duration": 6.4,
+      "success": true,
+      "timestamp": "2026-07-24T02:25:56.423Z"
+    },
+    {
+      "tool": "list_personnel",
+      "duration": 4.45,
+      "success": true,
+      "timestamp": "2026-07-24T02:25:56.432Z"
+    },
+    {
+      "tool": "list_alarms",
+      "duration": 6.49,
+      "success": true,
+      "timestamp": "2026-07-24T02:25:56.444Z"
+    },
+    {
+      "tool": "pls_health_check",
+      "duration": 7.09,
+      "success": true,
+      "timestamp": "2026-07-24T02:25:56.456Z"
+    },
+    {
+      "tool": "pls_health_check",
+      "duration": 20.54,
+      "success": true,
+      "timestamp": "2026-07-24T02:28:12.119Z"
+    }
+  ],
+  "totalCalls": 6,
+  "totalErrors": 0,
+  "startedAt": "2026-07-24T02:25:56.314Z",
+  "lastFlush": "2026-07-24T02:28:14.126Z"
+}
