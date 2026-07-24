@@ -112,6 +112,7 @@ export async function callTagBindings(): Promise<TagBindingEntry[]> {
 
 /**
  * 拉取全部绑定关系（内部函数）
+ * J1 P1: Java 端已改为统一数组格式，无需再兼容 object 格式
  */
 async function fetchAllBindings(): Promise<TagBindingEntry[]> {
   const res = await getMcpRealtime('bindings');
@@ -120,27 +121,16 @@ async function fetchAllBindings(): Promise<TagBindingEntry[]> {
   }
 
   const raw = res.result;
-  let normalized: TagBindingEntry[];
-
-  if (Array.isArray(raw)) {
-    normalized = raw.map((item: any) => ({
-      tagCode: item.tagCode || item[0],
-      bindName: item.bindName || item[1] || '',
-      bindType: (item.bindType as 'personnel' | 'car' | 'goods') || ('personnel' as const),
-      bindId: item.bindId || 0,
-    }));
-  } else if (typeof raw === 'object') {
-    normalized = Object.entries(raw).map(([tagCode, bindName]) => ({
-      tagCode,
-      bindName: String(bindName),
-      bindType: 'personnel' as const,
-      bindId: 0,
-    }));
-  } else {
-    throw new Error(`Unexpected bindings response format: ${typeof raw}`);
+  if (!Array.isArray(raw)) {
+    throw new Error(`Unexpected bindings response format: ${typeof raw} (expected array)`);
   }
 
-  return normalized.filter(b => b.bindName);
+  return raw.map((item: any) => ({
+    tagCode: item.tagCode,
+    bindName: item.bindName || '',
+    bindType: (item.bindType as 'personnel' | 'car' | 'goods') || 'personnel',
+    bindId: item.bindId || 0,
+  })).filter(b => b.bindName);
 }
 
 /**

@@ -84,6 +84,7 @@ export async function callTagBindings() {
 }
 /**
  * 拉取全部绑定关系（内部函数）
+ * J1 P1: Java 端已改为统一数组格式，无需再兼容 object 格式
  */
 async function fetchAllBindings() {
     const res = await getMcpRealtime('bindings');
@@ -91,27 +92,15 @@ async function fetchAllBindings() {
         throw new Error(`Failed to get bindings: ${res?.message || 'unknown'}`);
     }
     const raw = res.result;
-    let normalized;
-    if (Array.isArray(raw)) {
-        normalized = raw.map((item) => ({
-            tagCode: item.tagCode || item[0],
-            bindName: item.bindName || item[1] || '',
-            bindType: item.bindType || 'personnel',
-            bindId: item.bindId || 0,
-        }));
+    if (!Array.isArray(raw)) {
+        throw new Error(`Unexpected bindings response format: ${typeof raw} (expected array)`);
     }
-    else if (typeof raw === 'object') {
-        normalized = Object.entries(raw).map(([tagCode, bindName]) => ({
-            tagCode,
-            bindName: String(bindName),
-            bindType: 'personnel',
-            bindId: 0,
-        }));
-    }
-    else {
-        throw new Error(`Unexpected bindings response format: ${typeof raw}`);
-    }
-    return normalized.filter(b => b.bindName);
+    return raw.map((item) => ({
+        tagCode: item.tagCode,
+        bindName: item.bindName || '',
+        bindType: item.bindType || 'personnel',
+        bindId: item.bindId || 0,
+    })).filter(b => b.bindName);
 }
 /**
  * A2: 按 tagCode 查询单个绑定关系（优先查缓存）
