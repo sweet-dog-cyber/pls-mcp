@@ -1,10 +1,8 @@
 import axios from 'axios';
 import { appConfig, log } from '../config/settings.js';
 let httpClient = null;
-// ── Bindings cache (30s TTL) ──
-let bindingsCache = [];
-let bindingsCacheTime = 0;
-const BINDINGS_CACHE_TTL = 30_000;
+const bindingsCache = new Map();
+const BINDINGS_CACHE_TTL = 60_000;
 export function getApiClient() {
     if (httpClient)
         return httpClient;
@@ -65,14 +63,29 @@ export async function callRealtimeLocation(tagCode, timeout) {
 }
 /**
  * 查询标签绑定关系。统一返回数组格式：{ tagCode, bindName, bindType, bindId }[]
- * 带 30 秒缓存，兼容 Java 端 object 和 array 两种返回格式。
+ * A2: 细粒度缓存 — 按 tagCode 存储，60 秒 TTL，写操作只失效关联标签。
+ * 兼容 Java 端 object 和 array 两种返回格式。
  */
 export async function callTagBindings() {
-    // Check cache first
     const now = Date.now();
-    if (bindingsCacheTime > 0 && (now - bindingsCacheTime) < BINDINGS_CACHE_TTL) {
-        return bindingsCache;
+    // A2: 清理过期条目
+    for (const [tagCode, cached] of bindingsCache) {
+        if (cached.expireAt < now)
+            bindingsCache.delete(tagCode);
     }
+    // A2: 缓存为空则全量拉取
+    if (bindingsCache.size === 0) {
+        const fresh = await fetchAllBindings();
+        for (const entry of fresh) {
+            bindingsCache.set(entry.tagCode, { entry, expireAt: now + BINDINGS_CACHE_TTL });
+        }
+    }
+    return Array.from(bindingsCache.values()).map(c => c.entry);
+}
+/**
+ * 拉取全部绑定关系（内部函数）
+ */
+async function fetchAllBindings() {
     const res = await getMcpRealtime('bindings');
     if (!res || res.status !== 200) {
         throw new Error(`Failed to get bindings: ${res?.message || 'unknown'}`);
@@ -98,17 +111,39 @@ export async function callTagBindings() {
     else {
         throw new Error(`Unexpected bindings response format: ${typeof raw}`);
     }
-    normalized = normalized.filter(b => b.bindName);
-    bindingsCache = normalized;
-    bindingsCacheTime = now;
-    return normalized;
+    return normalized.filter(b => b.bindName);
 }
 /**
- * 清除绑定缓存（在写操作后调用）
+ * A2: 按 tagCode 查询单个绑定关系（优先查缓存）
+ */
+export async function callTagBindingByCode(tagCode) {
+    const cached = bindingsCache.get(tagCode);
+    if (cached && cached.expireAt > Date.now())
+        return cached.entry;
+    // 未命中则全量拉取并更新缓存
+    await callTagBindings();
+    return bindingsCache.get(tagCode)?.entry ?? null;
+}
+/**
+ * A2: 失效指定 tagCode 的缓存（细粒度）
+ */
+export function invalidateBindingByTagCode(tagCode) {
+    bindingsCache.delete(tagCode);
+}
+/**
+ * A2: 批量失效指定 tagCode 的缓存
+ */
+export function invalidateBindingsByTagCodes(tagCodes) {
+    for (const tagCode of tagCodes) {
+        bindingsCache.delete(tagCode);
+    }
+}
+/**
+ * A2: 清除全部绑定缓存（向后兼容，降级方案）
+ * 建议优先使用 invalidateBindingByTagCode 细粒度失效
  */
 export function invalidateBindingsCache() {
-    bindingsCache = [];
-    bindingsCacheTime = 0;
+    bindingsCache.clear();
 }
 export async function callAreaPersonnel(areaId, timeout) {
     const res = await getMcpRealtime(`in-area/${areaId}`, undefined, timeout);
@@ -153,7 +188,22 @@ export async function callMcpWrite(path, data) {
         headers['X-MCP-Api-Key'] = appConfig.api.apiKey;
     }
     const result = (await client.post(`/mcp/write/${path}`, data, { headers })).data;
-    invalidateBindingsCache();
+    // A2: 细粒度缓存失效
+    const pathParts = path.split('/');
+    const action = pathParts[0]; // bind | unbind | tag | person | ...
+    if (action === 'bind' && data?.tagId) {
+        invalidateBindingByTagCode(String(data.tagId));
+    }
+    else if (action === 'unbind' && data?.tagId) {
+        invalidateBindingByTagCode(String(data.tagId));
+    }
+    else if (pathParts[0] === 'tag' && pathParts[1] === 'delete' && Array.isArray(data?.ids)) {
+        // 删除标签时失效全部缓存（无法知道哪些标签被删除）
+        invalidateBindingsCache();
+    }
+    else {
+        invalidateBindingsCache();
+    }
     return result;
 }
 // ── External call endpoints ──

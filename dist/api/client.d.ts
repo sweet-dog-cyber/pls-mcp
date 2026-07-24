@@ -10,11 +10,25 @@ export declare function getMcpRealtime(path: string, params?: Record<string, any
 export declare function callRealtimeLocation(tagCode: string, timeout?: number): Promise<any>;
 /**
  * 查询标签绑定关系。统一返回数组格式：{ tagCode, bindName, bindType, bindId }[]
- * 带 30 秒缓存，兼容 Java 端 object 和 array 两种返回格式。
+ * A2: 细粒度缓存 — 按 tagCode 存储，60 秒 TTL，写操作只失效关联标签。
+ * 兼容 Java 端 object 和 array 两种返回格式。
  */
 export declare function callTagBindings(): Promise<TagBindingEntry[]>;
 /**
- * 清除绑定缓存（在写操作后调用）
+ * A2: 按 tagCode 查询单个绑定关系（优先查缓存）
+ */
+export declare function callTagBindingByCode(tagCode: string): Promise<TagBindingEntry | null>;
+/**
+ * A2: 失效指定 tagCode 的缓存（细粒度）
+ */
+export declare function invalidateBindingByTagCode(tagCode: string): void;
+/**
+ * A2: 批量失效指定 tagCode 的缓存
+ */
+export declare function invalidateBindingsByTagCodes(tagCodes: string[]): void;
+/**
+ * A2: 清除全部绑定缓存（向后兼容，降级方案）
+ * 建议优先使用 invalidateBindingByTagCode 细粒度失效
  */
 export declare function invalidateBindingsCache(): void;
 export declare function callAreaPersonnel(areaId: number, timeout?: number): Promise<any>;
