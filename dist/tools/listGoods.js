@@ -1,19 +1,22 @@
 import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { QUERY_ANNOTATIONS } from '../constants.js';
 import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('list_goods', {
     title: 'list_goods',
-    description: `获取物品/货物列表，可按名称或绑定状态筛选。
+    description: `【📊 查询】获取物品/货物列表，可按名称或绑定状态筛选。
 
 参数:
   - keyword: 搜索关键词（可选），匹配名称或编号
   - isBound: 绑定状态（可选），true=已绑定, false=未绑定
-  - pageSize, page: 分页
+  - pageSize: 每页数量，默认100
+  - page: 页码，默认1
 
-返回: 物品列表，含编号、名称、绑定标签`,
-    annotations: READ_ONLY_ANNOTATIONS,
+返回: 物品列表，含编号、名称、绑定标签
+
+提示: 用 keyword 模糊搜索物品名。`,
+    annotations: QUERY_ANNOTATIONS,
     inputSchema: z.object({
         keyword: z.string().optional().describe('搜索关键词(匹配物品名称或编号)'),
         isBound: z.boolean().optional().describe('按绑定状态筛选，true=已绑定, false=未绑定'),

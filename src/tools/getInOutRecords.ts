@@ -1,24 +1,23 @@
 import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { QUERY_ANNOTATIONS } from '../constants.js';
 import { truncateOutput } from '../utils/truncate.js';
 
 server.registerTool('get_in_and_out_records', {
   title: 'get_in_and_out_records',
-  description: `查询进出区域记录。返回标签、区域、进入/离开时间等信息。可按区域或时间范围筛选。
+  description: `【📊 查询】查询进出区域记录，可按区域或时间范围筛选。
 
 参数:
-  - areaId: 区域ID（可选）
+  - areaId: 区域ID（可选），不传则返回全部区域
   - timeRange: 时间范围（可选），单日或范围
-  - pageSize: 每页数量
-  - page: 页码
+  - pageSize: 每页数量，默认100
+  - page: 页码，默认1
 
-返回: 进出记录列表，含状态（在场/已离开）
+返回: 进出记录列表，含tagCode、区域、进入/离开时间、状态（在场/已离开）
 
-错误处理:
-  - 无记录时返回空列表`,
-  annotations: READ_ONLY_ANNOTATIONS,
+提示: 用 timeRange 查某天进出情况。`,
+  annotations: QUERY_ANNOTATIONS,
   inputSchema: z.object({
     areaId: z.number().optional().describe('区域ID，不传则返回全部区域'),
     timeRange: z.string().optional().describe('时间范围，格式 "YYYY-MM-DD"'),
@@ -44,8 +43,6 @@ server.registerTool('get_in_and_out_records', {
     sql += ' ORDER BY in_date_time DESC LIMIT ? OFFSET ?';
     params.push(pageSize, (page - 1) * pageSize);
     const records = await query(sql, params);
-
-    // Count total for proper pagination
     let countSql = `SELECT COUNT(*) as total FROM logs_area_in_and_out WHERE 1=1`;
     const countParams: any[] = [];
     if (areaId !== undefined) { countSql += ' AND area_id = ?'; countParams.push(areaId); }
@@ -61,7 +58,6 @@ server.registerTool('get_in_and_out_records', {
     }
     const totalRows = await query(countSql, countParams);
     const total = Array.isArray(totalRows) ? totalRows[0]?.total : 0;
-
     const { text, truncated } = truncateOutput(JSON.stringify({ total, page, pageSize, records: records.map(r => ({
       id: r.id, tagCode: r.tag_code, areaId: r.area_id, areaRuleId: r.area_rule_id,
       inDateTime: r.in_date_time, outDateTime: r.out_date_time,

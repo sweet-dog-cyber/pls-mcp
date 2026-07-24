@@ -1,19 +1,21 @@
 import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS, ALARM_TYPE_NAME_MAP } from '../constants.js';
+import { QUERY_ANNOTATIONS, ALARM_TYPE_NAME_MAP } from '../constants.js';
 import { truncateOutput } from '../utils/truncate.js';
 
 server.registerTool('list_alarm_rules', {
   title: 'list_alarm_rules',
-  description: `获取告警规则列表，可按告警类型或名称筛选。
+  description: `【📊 查询】获取告警规则列表，可按告警类型或名称筛选。
 
 参数:
   - alarmType: 告警类型（可选），0-入侵 ~ 6-超速
   - keyword: 规则名称关键词（可选）
 
-返回: 告警规则列表，含名称、类型、阈值、受控时段`,
-  annotations: READ_ONLY_ANNOTATIONS,
+返回: 告警规则列表，含名称、类型、阈值、受控时段
+
+提示: 最多返回 2000 条。`,
+  annotations: QUERY_ANNOTATIONS,
   inputSchema: z.object({
     alarmType: z.number().min(0).max(6).optional().describe('告警类型: 0-入侵, 1-越界, 2-超限, 3-低位, 4-超时, 5-低电, 6-超速'),
     keyword: z.string().optional().describe('按规则名称模糊搜索'),

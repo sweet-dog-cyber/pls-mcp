@@ -1,13 +1,20 @@
 import { server, z } from '../server.js';
 import { callRealtimeLocation, callTagBindings } from '../api/client.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { BATCH_ANNOTATIONS } from '../constants.js';
 import { truncateOutput } from '../utils/truncate.js';
 
 server.registerTool('get_batch_tag_locations', {
   title: 'get_batch_tag_locations',
-  description: `批量查询多个标签的实时位置。一次请求返回所有标签的位置信息，减少 API 调用次数。\n\n参数:\n  - tagCodes: 标签编码数组（必填），最多 100 个\n\n返回: 批量位置结果，含坐标、绑定名称、电量、在线状态\n\n提示: 比逐个查询快 5-10 倍，适合同时查看多个标签`,
-  annotations: READ_ONLY_ANNOTATIONS,
+  description: `【⚡ 批量】批量查询多个标签的实时位置。一次请求返回所有标签的位置信息。
+
+参数:
+  - tagCodes: 标签编码数组（必填），最多 100 个
+
+返回: 批量位置结果，含坐标、绑定名称、电量、在线状态统计
+
+提示: 比逐个查询快 5-10 倍。内部按 20 个一批并行查询。`,
+  annotations: BATCH_ANNOTATIONS,
   inputSchema: z.object({
     tagCodes: z.array(z.string()).min(1).max(100).describe('标签编码数组，如 ["UWB001","T988496"]，最多100个'),
   }).strict(),
@@ -15,7 +22,6 @@ server.registerTool('get_batch_tag_locations', {
   try {
     const { tagCodes } = args;
 
-    // Parallel: fetch bindings once + all locations in parallel
     let bindingsMap: Record<string, string> = {};
     try {
       const bindings = await callTagBindings();
@@ -24,7 +30,6 @@ server.registerTool('get_batch_tag_locations', {
       log(`Warning: failed to fetch bindings: ${e.message}`);
     }
 
-    // Fetch all locations in parallel (chunks of 20 to avoid overwhelming)
     const results: any[] = [];
     const batchSize = 20;
     for (let i = 0; i < tagCodes.length; i += batchSize) {
@@ -33,24 +38,14 @@ server.registerTool('get_batch_tag_locations', {
         try {
           const location = await callRealtimeLocation(tagCode);
           return {
-            tagCode,
-            bindName: bindingsMap[tagCode] || '',
-            x: location.x,
-            y: location.y,
-            mapCode: location.mapCode,
-            mapName: location.mapName,
-            power: location.power,
-            areaName: location.areaName || '',
-            timestamp: location.timestamp,
+            tagCode, bindName: bindingsMap[tagCode] || '',
+            x: location.x, y: location.y, mapCode: location.mapCode,
+            mapName: location.mapName, power: location.power,
+            areaName: location.areaName || '', timestamp: location.timestamp,
             status: 'online',
           };
         } catch (e: any) {
-          return {
-            tagCode,
-            bindName: bindingsMap[tagCode] || '',
-            status: 'no_data',
-            message: e.message,
-          };
+          return { tagCode, bindName: bindingsMap[tagCode] || '', status: 'no_data', message: e.message };
         }
       }));
       results.push(...chunkResults);
@@ -59,10 +54,7 @@ server.registerTool('get_batch_tag_locations', {
     const online = results.filter(r => r.status === 'online').length;
     const noData = results.filter(r => r.status === 'no_data').length;
     const { text, truncated } = truncateOutput(JSON.stringify({
-      total: tagCodes.length,
-      online,
-      noData,
-      locations: results,
+      total: tagCodes.length, online, noData, locations: results,
     }, null, 2));
 
     return {

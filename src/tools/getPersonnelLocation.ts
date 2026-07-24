@@ -2,22 +2,20 @@ import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { callRealtimeLocation } from '../api/client.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { QUERY_ANNOTATIONS } from '../constants.js';
 import { truncateOutput } from '../utils/truncate.js';
 
 server.registerTool('get_personnel_location', {
   title: 'get_personnel_location',
-  description: `按人员姓名或ID查询实时位置。先查人员的绑定标签，再查标签的实时位置。
+  description: `【📊 查询】按人员姓名或ID查询实时位置。
 
 参数:
   - nameOrId: 人员姓名或ID（必填），如 "张三" 或 "1001"
 
 返回: 人员实时位置信息，含姓名、坐标、地图、区域
 
-错误处理:
-  - 人员不存在时返回"未找到人员"
-  - 人员未绑定时提示未绑定标签`,
-  annotations: READ_ONLY_ANNOTATIONS,
+提示: 内部使用 Promise.all 并行查询多人位置。`,
+  annotations: QUERY_ANNOTATIONS,
   inputSchema: z.object({
     nameOrId: z.string().describe('人员姓名或ID，如 "张三" 或 "1001"'),
   }).strict(),
@@ -31,8 +29,6 @@ server.registerTool('get_personnel_location', {
       personnel = await query(`SELECT id, name, tag_code FROM personnel_information WHERE name LIKE ?`, [`%${nameOrId}%`]);
     }
     if (personnel.length === 0) return { content: [{ type: 'text', text: `未找到人员 "${nameOrId}"` }] };
-
-    // Parallel API calls with Promise.all for bound personnel
     const results = await Promise.all(personnel.map(async (p) => {
       if (!p.tag_code) {
         return { name: p.name, tagCode: null, message: '未绑定标签' };
@@ -48,7 +44,6 @@ server.registerTool('get_personnel_location', {
         return { name: p.name, tagCode: p.tag_code, message: `位置查询失败: ${e.message}` };
       }
     }));
-
     const { text, truncated } = truncateOutput(JSON.stringify(results, null, 2));
     return {
       content: [{

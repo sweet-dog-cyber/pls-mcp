@@ -1,18 +1,20 @@
 import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { QUERY_ANNOTATIONS } from '../constants.js';
 import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('list_anchors', {
     title: 'list_anchors',
-    description: `获取基站列表，可按状态或地图筛选。返回基站编码、位置、状态等信息。
+    description: `【📊 查询】获取基站列表，可按状态或地图筛选。
 
 参数:
   - status: 基站状态（可选），如"在线"、"离线"
   - mapId: 地图ID（可选）
 
-返回: 基站列表，含编码、坐标、状态、类型`,
-    annotations: READ_ONLY_ANNOTATIONS,
+返回: 基站列表，含编码、坐标、状态、安装位置
+
+提示: 最多返回 2000 条。`,
+    annotations: QUERY_ANNOTATIONS,
     inputSchema: z.object({
         status: z.string().optional().describe('基站状态，如 "在线", "离线"'),
         mapId: z.number().optional().describe('地图ID，不传则返回全部地图'),

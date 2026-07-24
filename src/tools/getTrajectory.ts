@@ -1,12 +1,12 @@
 import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { QUERY_ANNOTATIONS } from '../constants.js';
 import { truncateOutput } from '../utils/truncate.js';
 
 server.registerTool('get_trajectory', {
   title: 'get_trajectory',
-  description: `查询标签的历史行为轨迹。返回时间序列坐标点。
+  description: `【📊 查询】查询标签的历史行为轨迹。
 
 参数:
   - tagCode: 标签编码（必填）
@@ -15,12 +15,10 @@ server.registerTool('get_trajectory', {
   - mapId: 地图ID（可选）
   - limit: 最多返回点数，默认500，最大5000
 
-返回: 轨迹点列表，含时间、坐标、地图
+返回: 轨迹点列表，含时间、坐标(x/y)、地图ID
 
-错误处理:
-  - 无数据时返回空列表
-  - 使用时间范围和limit控制数据量`,
-  annotations: READ_ONLY_ANNOTATIONS,
+提示: 用时间范围缩小数据量。`,
+  annotations: QUERY_ANNOTATIONS,
   inputSchema: z.object({
     tagCode: z.string().describe('标签编码，如 UWB001'),
     startTime: z.string().optional().describe('开始时间，格式 "2026-07-09 08:00:00"'),

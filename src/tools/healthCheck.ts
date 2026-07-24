@@ -1,12 +1,18 @@
 import { server, z } from '../server.js';
 import { getPool } from '../db/connection.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { DIAGNOSE_ANNOTATIONS } from '../constants.js';
 
 server.registerTool('pls_health_check', {
   title: 'pls_health_check',
-  description: `服务健康检查。检测 MySQL 连接、Java API 连通性、工具注册状态。\n\n返回: 各组件状态（healthy/unhealthy/unknown）+ 服务信息\n\n提示: 排查问题时首先调用此工具确认各组件是否正常`,
-  annotations: READ_ONLY_ANNOTATIONS,
+  description: `【🔍 诊断】服务健康检查。检测 MySQL 连接、Java API 连通性、工具注册状态。
+
+参数: 无需参数。
+
+返回: 各组件状态（healthy/unhealthy/unknown）+ 服务信息 + 运行时长
+
+提示: 排查问题时首先调用此工具确认各组件是否正常。`,
+  annotations: DIAGNOSE_ANNOTATIONS,
   inputSchema: z.object({}).strict(),
 }, async () => {
   const result: Record<string, any> = {
@@ -36,7 +42,6 @@ server.registerTool('pls_health_check', {
     result.javaApi = { status: 'unhealthy', detail: err.message };
   }
 
-  // Check tools count via server internals
   result.tools = { status: 'healthy', count: 60 };
 
   return {

@@ -1,20 +1,18 @@
 import { server, z } from '../server.js';
 import { callRealtimeLocation, callTagBindings } from '../api/client.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { QUERY_ANNOTATIONS } from '../constants.js';
 server.registerTool('get_tag_location', {
     title: 'get_tag_location',
-    description: `按标签编码查询实时位置。返回坐标、所在区域、电量、绑定人员等信息。
+    description: `【📊 查询】按标签编码查询实时位置。
 
 参数:
   - tagCode: 标签编码（必填），如 UWB001
 
 返回: 实时位置信息，含坐标(x/y)、地图编码/名称、时间戳、电量、绑定人员、所在区域
 
-错误处理:
-  - 标签不存在时返回提示信息
-  - 绑定信息获取失败不影响位置返回`,
-    annotations: READ_ONLY_ANNOTATIONS,
+提示: 标签不在线或无位置数据时会返回清晰错误。`,
+    annotations: QUERY_ANNOTATIONS,
     inputSchema: z.object({
         tagCode: z.string().describe('标签编码，如 UWB001'),
     }).strict(),

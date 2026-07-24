@@ -1,11 +1,11 @@
 import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { QUERY_ANNOTATIONS } from '../constants.js';
 import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('list_personnel', {
     title: 'list_personnel',
-    description: `获取人员列表，可按部门或关键词筛选。返回人员姓名、部门、电话、绑定标签等信息。
+    description: `【📊 查询】获取人员列表，可按部门或关键词筛选。
 
 参数:
   - departmentId: 部门ID（可选），不传则返回全部部门
@@ -13,8 +13,10 @@ server.registerTool('list_personnel', {
   - pageSize: 每页数量，默认100
   - page: 页码，默认1
 
-返回: 带分页的人员列表，含姓名、部门、电话、绑定标签`,
-    annotations: READ_ONLY_ANNOTATIONS,
+返回: 带分页的人员列表，含姓名、部门、电话、绑定标签
+
+提示: 用 keyword 模糊搜索人名。`,
+    annotations: QUERY_ANNOTATIONS,
     inputSchema: z.object({
         departmentId: z.number().optional().describe('部门ID，不传则返回全部部门'),
         keyword: z.string().optional().describe('按姓名模糊搜索'),

@@ -1,7 +1,7 @@
 import { server, z } from '../server.js';
 import { callMcpWrite } from '../api/client.js';
 import { log } from '../config/settings.js';
-import { DESTRUCTIVE_ANNOTATIONS, CREATE_ANNOTATIONS } from '../constants.js';
+import { MANAGE_ANNOTATIONS, CREATE_ANNOTATIONS, checkConfirm } from '../constants.js';
 import { ENTITY_SCHEMA_MAP, ENTITY_NAME_MAP, DeleteSchema } from '../types/schemas.js';
 import { truncateOutput } from '../utils/truncate.js';
 
@@ -10,13 +10,14 @@ type EntityType = typeof ENTITY_TYPES[number];
 
 function registerCrudTool(name: string, entity: EntityType, action: 'add' | 'update' | 'delete') {
   const isDelete = action === 'delete';
+  const isUpdate = action === 'update';
   const entityName = ENTITY_NAME_MAP[entity] || entity;
 
   let annotations: any;
   if (action === 'delete') {
-    annotations = DESTRUCTIVE_ANNOTATIONS;
+    annotations = MANAGE_ANNOTATIONS;
   } else if (action === 'update') {
-    annotations = DESTRUCTIVE_ANNOTATIONS;
+    annotations = MANAGE_ANNOTATIONS;
   } else {
     annotations = CREATE_ANNOTATIONS;
   }
@@ -25,32 +26,42 @@ function registerCrudTool(name: string, entity: EntityType, action: 'add' | 'upd
     ? DeleteSchema
     : ENTITY_SCHEMA_MAP[entity];
 
+  // D3: delete 和 update 需要 confirm 确认
+  const finalSchema = (isDelete || isUpdate)
+    ? z.object({
+      confirm: z.literal('确认').describe('⚠️ 写操作需二次确认，必须传 "确认"'),
+      ...((isDelete ? { ids: (DeleteSchema as any).shape.ids } : {}) as any),
+      ...((ENTITY_SCHEMA_MAP[entity] as any).shape),
+    }).strict()
+    : inputSchema;
+
   const fieldList = isDelete
-    ? 'ids (ID数组)'
-    : ('shape' in inputSchema ? Object.keys((inputSchema as any).shape).join(', ') : '');
+    ? 'confirm + ids (ID数组)'
+    : 'confirm + 实体字段';
 
   server.registerTool(name, {
     title: name,
-    description: `${action === 'add' ? '创建' : action === 'update' ? '更新' : '删除'}${entityName}实体。
+    description: `【🔧 管理】${action === 'add' ? '创建' : action === 'update' ? '更新' : '删除'}${entityName}实体。
 
 参数:
-  - ${fieldList}
+  - confirm: 二次确认（必填），必须传 "确认"
+${isDelete ? '  - ids: ID数组（必填），要删除的实体ID列表\n' : ''}  - 根据实体类型传入对应字段
 
-注意: ${action === 'delete' ? '删除操作不可撤销，请确认后再执行' : '只传需要设置的字段，未传字段保持不变'}
+注意: ${action === 'delete' ? '删除操作不可撤销！请确认后再执行' : action === 'update' ? '更新需确认。只传需要设置的字段' : '只传需要设置的字段'}
 `,
     annotations,
-    inputSchema,
+    inputSchema: finalSchema,
   }, async (args: any) => {
     try {
+      // D3: 校验 confirm
+      if (isDelete || isUpdate) {
+        checkConfirm(args.confirm, `${action === 'delete' ? '删除' : '更新'}${entityName}`);
+      }
+
       const payload = isDelete ? { ids: args.ids } : args;
       const res = await callMcpWrite(`${entity}/${action}`, payload);
       const success = res?.result === true || res?.code === 200;
-      const result = {
-        success,
-        entity: entityName,
-        action,
-        args,
-      };
+      const result = { success, entity: entityName, action, args };
       const { text, truncated } = truncateOutput(JSON.stringify(result, null, 2));
       return {
         content: [{
@@ -59,6 +70,9 @@ function registerCrudTool(name: string, entity: EntityType, action: 'add' | 'upd
         }],
       };
     } catch (err: any) {
+      if (err.message.includes('需二次确认')) {
+        return { content: [{ type: 'text', text: err.message }], isError: true };
+      }
       log(`Error in ${name}:`, err.message);
       return { content: [{ type: 'text', text: `Error: ${name} 失败 - ${err.message}` }], isError: true };
     }

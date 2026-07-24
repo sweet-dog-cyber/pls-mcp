@@ -1,15 +1,27 @@
-export const READ_ONLY_ANNOTATIONS = {
+// ── Tool category constants ──
+export const TOOL_CATEGORY = {
+  query: '📊 查询',
+  manage: '🔧 管理',
+  diagnose: '🔍 诊断',
+  batch: '⚡ 批量',
+} as const;
+export type ToolCategory = keyof typeof TOOL_CATEGORY;
+
+// ── Annotations with category ──
+export const QUERY_ANNOTATIONS = {
   readOnlyHint: true,
   destructiveHint: false,
   idempotentHint: true,
   openWorldHint: false,
+  category: 'query' as ToolCategory,
 } as const;
 
-export const DESTRUCTIVE_ANNOTATIONS = {
+export const MANAGE_ANNOTATIONS = {
   readOnlyHint: false,
   destructiveHint: true,
   idempotentHint: false,
   openWorldHint: true,
+  category: 'manage' as ToolCategory,
 } as const;
 
 export const CREATE_ANNOTATIONS = {
@@ -17,7 +29,41 @@ export const CREATE_ANNOTATIONS = {
   destructiveHint: false,
   idempotentHint: false,
   openWorldHint: true,
+  category: 'manage' as ToolCategory,
 } as const;
+
+export const DIAGNOSE_ANNOTATIONS = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: false,
+  category: 'diagnose' as ToolCategory,
+} as const;
+
+export const BATCH_ANNOTATIONS = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: false,
+  category: 'batch' as ToolCategory,
+} as const;
+
+// ── Description prefix helper ──
+export function descPrefix(category: ToolCategory, title: string): string {
+  return `【${TOOL_CATEGORY[category]}】${title}`;
+}
+
+// ── Confirmation guard helper ──
+export function checkConfirm(confirm?: string, action: string = '写操作'): never | true {
+  if (confirm !== '确认') {
+    throw new Error(`${action}需二次确认，请传 confirm: "确认"`);
+  }
+  return true;
+}
+
+// ── Legacy aliases (backward compat) ──
+export const READ_ONLY_ANNOTATIONS = QUERY_ANNOTATIONS;
+export const DESTRUCTIVE_ANNOTATIONS = MANAGE_ANNOTATIONS;
 
 export const CHARACTER_LIMIT = 25000;
 
@@ -40,6 +86,11 @@ export const TAG_TYPE_NAME_MAP: Record<number, string> = {
   0: 'UWB', 1: 'Bluetooth', 2: 'GPS', 3: 'UWB+GPS', 4: '惯性导航',
 };
 
+// ── Area type mapping ──
+export const AREA_TYPE_MAP: Record<number, string> = {
+  0: '普通', 1: '禁区', 2: '安全区', 3: '集合区',
+};
+
 // ── Fitting method mapping ──
 export const FITTING_METHOD_MAP: Record<number, string> = {
   0: '无', 1: '重心', 2: '散点', 3: '环绕', 4: '直线',
@@ -48,4 +99,9 @@ export const FITTING_METHOD_MAP: Record<number, string> = {
 // ── Car type mapping ──
 export const CAR_TYPE_MAP: Record<number, string> = {
   0: '夹包车', 1: '转运车', 2: '正面吊',
+};
+
+// ── Gender mapping ──
+export const GENDER_MAP: Record<number, string> = {
+  0: '未知', 1: '男', 2: '女',
 };

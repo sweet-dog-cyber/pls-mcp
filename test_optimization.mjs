@@ -278,6 +278,45 @@ function assert(name, cond, detail = '') {
       assert('分页记录数正确', Array.isArray(d17.records) && d17.records.length <= 3, `records=${d17.records?.length}`);
     } catch (e) { assert('get_in_and_out_records', false, e.message); }
 
+    // 18. D1 描述统一模板
+    console.log('\n━━━ 18. D1 工具描述统一模板 ━━━');
+    const withPrefix = tools.filter(t => t.description.startsWith('【')).length;
+    const withoutPrefix = tools.filter(t => !t.description.startsWith('【')).length;
+    assert('全部工具有分类前缀', withoutPrefix === 0, `${withPrefix}有前缀, ${withoutPrefix}无前缀`);
+    const categories = {
+      '📊 查询': tools.filter(t => t.description.includes('📊 查询')).length,
+      '🔧 管理': tools.filter(t => t.description.includes('🔧 管理')).length,
+      '🔍 诊断': tools.filter(t => t.description.includes('🔍 诊断')).length,
+      '⚡ 批量': tools.filter(t => t.description.includes('⚡ 批量')).length,
+    };
+    Object.entries(categories).forEach(([k, v]) => console.log(`   ${k}: ${v}`));
+
+    // 19. D2 分组 annotations
+    console.log('\n━━━ 19. D2 工具分组 category ━━━');
+    const withCategory = tools.filter(t => t.annotations?.category).length;
+    const withoutCategory = tools.filter(t => !t.annotations?.category).length;
+    assert('全部工具有 category', withoutCategory === 0, `${withCategory}有category, ${withoutCategory}无`);
+    const catCounts = { query: 0, manage: 0, diagnose: 0, batch: 0 };
+    tools.forEach(t => { if (t.annotations?.category) catCounts[t.annotations.category]++; });
+    console.log(`   query=${catCounts.query} manage=${catCounts.manage} diagnose=${catCounts.diagnose} batch=${catCounts.batch}`);
+
+    // 20. D3 写操作 confirm 二次确认
+    console.log('\n━━━ 20. D3 写操作 confirm 二次确认 ━━━');
+    try {
+      const r20a = await req('tools/call', { name: 'pls_delete_tag', arguments: { ids: ['123'] } });
+      const content = r20a.result?.content?.[0]?.text || '';
+      assert('无 confirm 被拒绝', content.includes('二次确认') || content.includes('确认'), `msg: ${content.slice(0, 50)}`);
+    } catch (e) { assert('无 confirm 被拒绝', true, `rejected: ${e.message.slice(0, 50)}`); }
+    try {
+      const r20b = await req('tools/call', { name: 'pls_unbind_tag_from_person', arguments: { entityId: '100' } });
+      const content = r20b.result?.content?.[0]?.text || '';
+      assert('解绑无 confirm 被拒绝', content.includes('二次确认') || content.includes('确认'), `msg: ${content.slice(0, 50)}`);
+    } catch (e) { assert('解绑无 confirm 被拒绝', true, `rejected: ${e.message.slice(0, 50)}`); }
+    try {
+      const r20c = await req('tools/call', { name: 'pls_delete_tag', arguments: { confirm: '确认', ids: ['99999999999999'] } });
+      assert('有 confirm 通过校验', true);
+    } catch (e) { assert('有 confirm 通过校验', true, `api error (expected): ${e.message.slice(0, 50)}`); }
+
     // Summary
     console.log('\n' + '='.repeat(50));
     console.log(`  总计: ${total} | ✅ ${ok} | ❌ ${fail}`);

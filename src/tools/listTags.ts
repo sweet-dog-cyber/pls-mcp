@@ -1,12 +1,12 @@
 import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS, TAG_TYPE_MAP, TAG_TYPE_NAME_MAP } from '../constants.js';
+import { QUERY_ANNOTATIONS, TAG_TYPE_MAP, TAG_TYPE_NAME_MAP } from '../constants.js';
 import { truncateOutput } from '../utils/truncate.js';
 
 server.registerTool('list_tags', {
   title: 'list_tags',
-  description: `获取定位标签列表，可按地图或类型筛选。返回标签编码、状态、电量等信息。
+  description: `【📊 查询】获取定位标签列表，可按地图或类型筛选。
 
 参数:
   - mapId: 地图ID（可选），不传则返回全部地图
@@ -16,10 +16,8 @@ server.registerTool('list_tags', {
 
 返回: 带分页的标签列表，包含编码、类型、状态、电量、绑定状态
 
-错误处理:
-  - 数据库连接失败时返回详细错误信息
-  - 使用筛选条件减少结果集`,
-  annotations: READ_ONLY_ANNOTATIONS,
+提示: 使用 tagType 和 mapId 缩小范围。适合巡检和批量查看。`,
+  annotations: QUERY_ANNOTATIONS,
   inputSchema: z.object({
     mapId: z.number().optional().describe('地图ID，不传则返回全部地图'),
     tagType: z.enum(['UWB', 'Bluetooth', 'GPS', 'UWB+GPS', '惯性导航']).optional().describe('标签类型'),
@@ -42,7 +40,7 @@ server.registerTool('list_tags', {
     if (tagType !== undefined) { countSql += ' AND tag_type = ?'; countParams.push(TAG_TYPE_MAP[tagType] ?? tagType); }
     const totalRows = await query(countSql, countParams);
     const total = Array.isArray(totalRows) ? totalRows[0]?.total : 0;
-    const result = {
+    const { text, truncated } = truncateOutput(JSON.stringify({
       total, page, pageSize,
       tags: tags.map(t => ({
         id: t.id, tagCode: t.tag_code, model: t.model,
@@ -50,8 +48,7 @@ server.registerTool('list_tags', {
         status: t.status, power: t.power, isBind: t.is_bind ? '1' : '0',
         markerFile: t.marker_file, slice: t.slice,
       })),
-    };
-    const { text, truncated } = truncateOutput(JSON.stringify(result, null, 2));
+    }, null, 2));
     return {
       content: [{
         type: 'text',

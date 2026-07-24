@@ -1,12 +1,18 @@
 import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { QUERY_ANNOTATIONS } from '../constants.js';
 import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('list_maps', {
     title: 'list_maps',
-    description: '获取地图列表。返回地图编码、名称、所属楼栋等信息。无需参数。',
-    annotations: READ_ONLY_ANNOTATIONS,
+    description: `【📊 查询】获取地图列表。
+
+参数: 无需参数。
+
+返回: 地图列表，含编码、名称、所属楼栋。
+
+提示: 最多返回 2000 条。`,
+    annotations: QUERY_ANNOTATIONS,
     inputSchema: z.object({}).strict(),
 }, async () => {
     try {

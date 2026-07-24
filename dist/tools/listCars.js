@@ -1,20 +1,23 @@
 import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS, CAR_TYPE_MAP } from '../constants.js';
+import { QUERY_ANNOTATIONS, CAR_TYPE_MAP } from '../constants.js';
 import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('list_cars', {
     title: 'list_cars',
-    description: `获取车辆列表，可按车辆类型、车牌号或绑定状态筛选。
+    description: `【📊 查询】获取车辆列表，可按类型、关键词、绑定状态筛选。
 
 参数:
-  - carType: 车辆类型（可选）0-夹包车, 1-转运车, 2-正面吊
+  - carType: 车辆类型（可选），0-夹包车, 1-转运车, 2-正面吊
   - keyword: 搜索关键词（可选），匹配车牌/编号/品牌
   - isBound: 绑定状态（可选），true=已绑定, false=未绑定
-  - pageSize, page: 分页
+  - pageSize: 每页数量，默认100
+  - page: 页码，默认1
 
-返回: 车辆列表，含类型、品牌、型号、车牌号、绑定标签`,
-    annotations: READ_ONLY_ANNOTATIONS,
+返回: 车辆列表，含类型、品牌、型号、车牌号、绑定标签
+
+提示: 用 keyword 模糊搜索车牌或品牌。`,
+    annotations: QUERY_ANNOTATIONS,
     inputSchema: z.object({
         carType: z.number().optional().describe('车辆类型: 0-夹包车, 1-转运车, 2-正面吊'),
         keyword: z.string().optional().describe('搜索关键词(匹配车牌号/车辆编号/品牌)'),

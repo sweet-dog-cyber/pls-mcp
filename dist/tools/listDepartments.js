@@ -1,17 +1,19 @@
 import { server, z } from '../server.js';
 import { query } from '../db/connection.js';
 import { log } from '../config/settings.js';
-import { READ_ONLY_ANNOTATIONS } from '../constants.js';
+import { QUERY_ANNOTATIONS } from '../constants.js';
 import { truncateOutput } from '../utils/truncate.js';
 server.registerTool('list_departments', {
     title: 'list_departments',
-    description: `获取部门列表，返回树状组织结构。
+    description: `【📊 查询】获取部门树状组织结构。
 
 参数:
   - keyword: 部门名称关键词（可选）
 
-返回: 部门树结构，含名称、编码、负责人、电话、子部门`,
-    annotations: READ_ONLY_ANNOTATIONS,
+返回: 部门树结构，含名称、编码、负责人、电话、子部门
+
+提示: 最多返回 2000 条。返回为嵌套树结构。`,
+    annotations: QUERY_ANNOTATIONS,
     inputSchema: z.object({
         keyword: z.string().optional().describe('按部门名称搜索'),
     }).strict(),
