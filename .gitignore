@@ -43,8 +43,12 @@ BOOT-INF/
 .reasonix/
 
 # Environment (actual values)
+.env
 .env.local
 .env.production
+
+# Runtime data
+data/
 
 # Publish archive
 *.tgz
